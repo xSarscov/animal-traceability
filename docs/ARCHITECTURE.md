@@ -83,6 +83,14 @@ La matriz M3 es: `anon` no tiene acceso directo a ninguna tabla privada; `authen
 
 El seed local crea los usuarios reproducibles `admin@animal-traceability.test` / `DemoAdmin123!` y `staff@animal-traceability.test` / `DemoStaff123!`, ambos miembros de `Animal Traceability Demo`. Son credenciales exclusivas de desarrollo local, no credenciales Cloud. Las pruebas pgTAP de M3 ejecutan requests simulados como admin/staff de dos organizaciones y como `anon`, además de comprobar grants, RLS, helpers y el hardening de funciones.
 
+## Inventario de microchips materializado en M4
+
+`/microchips` es una ruta privada dentro de `RequireAuth`. La feature realiza una sola lectura inicial con el cliente Supabase existente: `SELECT code, technology, frequency_khz, standard, batch_code, status FROM microchips ORDER BY code ASC`. No envía `organization_id`, no realiza joins y no tiene `INSERT`, `UPDATE`, `DELETE`, RPC ni permisos adicionales; los grants y RLS de M3 deciden la colección antes de que llegue al navegador.
+
+La búsqueda parcial por código y el filtro de estado se aplican localmente sobre esa colección autorizada, mediante estado local y una lista visible derivada. Esto es suficiente para el inventario pequeño del MVP y evita una request por pulsación. Si el inventario supera esta escala, un milestone futuro podrá introducir paginación server-side sin convertir el filtro de cliente en mecanismo de autorización.
+
+La pantalla distingue loading, inventario vacío, filtros sin coincidencias y error con retry de la misma lectura. No implementa scanner, captura HID, lookup de escaneo, detalle de chip ni acciones de inventario; M5 sigue siendo responsable del escáner HID.
+
 La ruta pública no obtiene tablas directamente. `get_public_animal_by_chip` devuelve solo `chipCode`, `name`, `species`, `breed`, `sex`, `color` y `status`. La creación anónima de un reporte ocurre exclusivamente mediante `submit_recovery_report`, que no concede lectura general de `recovery_reports`.
 
 ## Estructura prevista

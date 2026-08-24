@@ -3,6 +3,7 @@ import { Navigate, createBrowserRouter } from 'react-router'
 import { AppShell } from '../components/layout/AppShell'
 import { LoginPage } from '../features/auth/LoginPage'
 import { RequireAuth } from '../features/auth/RequireAuth'
+import { MicrochipInventoryPage } from '../features/microchips/MicrochipInventoryPage'
 
 function HomePage() {
   return (
@@ -49,7 +50,7 @@ export const router = createBrowserRouter([
           { path: 'animals', element: <Navigate replace to="/" /> },
           { path: 'animals/new', element: <Navigate replace to="/" /> },
           { path: 'animals/:animalId', element: <Navigate replace to="/" /> },
-          { path: 'microchips', element: <Navigate replace to="/" /> },
+          { path: 'microchips', element: <MicrochipInventoryPage /> },
           { path: 'recovery-reports', element: <Navigate replace to="/" /> },
         ],
       },

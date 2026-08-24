@@ -4,7 +4,7 @@ MVP web de identificación y trazabilidad animal mediante microchips RFID y lect
 
 ## Estado
 
-M3 — Auth, multi-tenancy y RLS. El esquema se valida contra Supabase local; la UI se limita a login, rutas privadas y logout. Inventario, escáner y demás funcionalidades de dominio siguen fuera de alcance.
+M4 — Inventario de microchips. La ruta privada `/microchips` muestra de forma read-only los microchips autorizados por RLS, con búsqueda local por código y filtro de estado. Escáner HID, cambios de inventario y registro de animales siguen fuera de alcance.
 
 ## Requisitos
 
@@ -39,6 +39,10 @@ El seed local crea únicamente para demo:
 - `staff@animal-traceability.test` / `DemoStaff123!` con rol `staff`.
 
 Ambos pertenecen a `Animal Traceability Demo`. Estas credenciales no son secretos ni se deben usar en Supabase Cloud. El chip físico `990000015300168` queda `available`, sin animal asociado.
+
+## Inventario M4
+
+Después de iniciar sesión, abrir `/microchips`. La pantalla ejecuta solo una lectura de `microchips` bajo los grants y RLS de M3; no permite crear, editar, bloquear ni eliminar chips. Los filtros se ejecutan localmente sobre las filas ya autorizadas. M5 añadirá el scanner HID en un flujo separado.
 
 ## Checks
 

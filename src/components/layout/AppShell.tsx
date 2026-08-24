@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router'
+import { NavLink, Outlet } from 'react-router'
 
 import { useAuth } from '../../features/auth/useAuth'
 import { supabase } from '../../lib/supabase'
@@ -24,8 +24,29 @@ export function AppShell() {
   return (
     <div className="min-h-screen bg-stone-50">
       <header className="border-b border-stone-200 bg-white">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-6 py-5">
-          <span className="text-lg font-semibold tracking-tight text-stone-950">Animal Traceability</span>
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-4 px-6 py-5">
+          <div className="flex items-center gap-6">
+            <span className="text-lg font-semibold tracking-tight text-stone-950">Animal Traceability</span>
+            <nav aria-label="Navegación principal" className="flex items-center gap-4 text-sm font-medium">
+              <NavLink
+                className={({ isActive }) =>
+                  isActive ? 'text-emerald-800 underline underline-offset-4' : 'text-stone-600 hover:text-stone-950'
+                }
+                end
+                to="/"
+              >
+                Inicio
+              </NavLink>
+              <NavLink
+                className={({ isActive }) =>
+                  isActive ? 'text-emerald-800 underline underline-offset-4' : 'text-stone-600 hover:text-stone-950'
+                }
+                to="/microchips"
+              >
+                Microchips
+              </NavLink>
+            </nav>
+          </div>
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-stone-600 sm:inline">{user?.email}</span>
             <button

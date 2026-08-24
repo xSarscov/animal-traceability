@@ -13,7 +13,7 @@ No habrá API Node/Express propia en v0.1. No introducir Next.js, Redux, Zustand
 - El routing usa el paquete `react-router` con `createBrowserRouter` y `RouterProvider`. No se instaló `react-router-dom`, `@react-router/dev`, loaders ni actions de negocio.
 - ESLint sustituye al linter del template de Vite. React Compiler no está habilitado.
 - Tailwind se integra con el plugin actual `@tailwindcss/vite`; el CSS principal importa `tailwindcss` directamente, sin configuración legacy de PostCSS ni `tailwind.config.js`.
-- Git fue inicializado solo en local para este repositorio; no hay remote configurado ni publicación.
+- El repositorio Git está publicado en GitHub y tiene remote configurado. Esta decisión no cambia el flujo de desarrollo local.
 - Vitest, React Testing Library, jsdom y Playwright están configurados como infraestructura. M1 solo incluye una prueba de bootstrap, no pruebas de dominio.
 
 ## Diagrama lógico
@@ -58,6 +58,16 @@ Lectores Bluetooth HID futuros deben alimentar el mismo input y las mismas regla
 Todas las tablas privadas tendrán RLS. Un miembro solo puede acceder a las organizaciones de las que forma parte. No se permiten políticas abiertas ni SELECT anónimo directo sobre organizaciones, miembros, propietarios, animales, microchips o eventos.
 
 RLS controla el acceso, pero no reemplaza la integridad referencial multi-tenant. En M2 se definirá el mecanismo PostgreSQL efectivo —preferiblemente claves/constraints compuestas cuando resulte apropiado, junto con RPC transaccionales— para impedir que un animal quede referenciando un microchip o propietario de otra organización.
+
+## Base de datos materializada en M2
+
+Supabase CLI se instala como dependencia de desarrollo y el proyecto usa un stack local, sin vincularse ni ejecutar `db push` contra Supabase Cloud. Las migrations versionadas materializan las siete tablas de dominio, sus enums PostgreSQL, timestamps y los índices necesarios. `supabase/seed.sql` contiene exclusivamente datos de demostración reproducibles.
+
+DR-008 se impone mediante FKs compuestas desde `animals` hacia `owners (organization_id, id)` y `microchips (organization_id, id)`, además de la FK del animal hacia su organización. Por tanto, RLS no es el único control que impide referencias cruzadas entre tenants.
+
+La cardinalidad de microchip se impone mediante constraint triggers `DEFERRABLE INITIALLY DEFERRED` en `microchips` y `animals`. Al final de cada transacción validan que `available` y `blocked` tengan cero animales y que `implanted` tenga exactamente uno; la UNIQUE de `animals.microchip_id` sigue impidiendo más de uno. Esto permite a M6 construir una transición coherente dentro de una única transacción sin aceptar estados finales inválidos.
+
+RLS se habilita en todas las tablas privadas desde M2, pero no existen policies hasta M3. pgTAP vive en `supabase/tests/database/`. Tras levantar el stack local, `supabase gen types typescript --local --schema public` genera `src/types/database.types.ts`, que el cliente Supabase tipará como `Database`.
 
 La ruta pública no obtiene tablas directamente. `get_public_animal_by_chip` devuelve solo `chipCode`, `name`, `species`, `breed`, `sex`, `color` y `status`. La creación anónima de un reporte ocurre exclusivamente mediante `submit_recovery_report`, que no concede lectura general de `recovery_reports`.
 

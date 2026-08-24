@@ -33,7 +33,7 @@ Este documento es normativo: las reglas DR-001 a DR-008 son invariantes de produ
 | `implanted` | Exactamente 1 | El escaneo abre el perfil de ese animal. |
 | `blocked` | 0 | Está administrativamente inhabilitado; no puede registrar un animal. |
 
-El sistema nunca debe producir `available` con un animal asociado, `blocked` con un animal asociado ni `implanted` sin animal asociado. La implementación concreta de estas invariantes pertenece a M2/M6; no se implementa en M0.
+El sistema nunca debe producir `available` con un animal asociado, `blocked` con un animal asociado ni `implanted` sin animal asociado. M2 lo refuerza con constraint triggers PostgreSQL diferidos en `animals` y `microchips`, evaluados sobre el estado final de la transacción; M6 solamente consumirá esta garantía al registrar animales.
 
 Una vacuna usa `animal_events.metadata` durante el MVP; ejemplo: `{ "vaccine": "Rabia", "batch": "AR-2026-24", "nextDose": "2027-09-10" }`. No crear un subsistema clínico separado.
 
@@ -75,7 +75,7 @@ Un animal, su microchip y su propietario deben pertenecer siempre a la misma org
 A.organization_id = A.microchip.organization_id = A.owner.organization_id
 ```
 
-No debe ser posible crear ni modificar un animal de modo que produzca referencias cruzadas entre tenants. Esta invariante debe reforzarse posteriormente en PostgreSQL y no depender solo de validaciones React o RLS. En M2 se decidirá la implementación concreta, preferiblemente mediante integridad relacional efectiva —por ejemplo, claves/constraints compuestas cuando resulte apropiado— y RPC transaccionales. RLS sigue siendo obligatorio, pero no sustituye esta integridad referencial.
+No debe ser posible crear ni modificar un animal de modo que produzca referencias cruzadas entre tenants. M2 lo refuerza en PostgreSQL mediante las FKs compuestas `(organization_id, owner_id) → owners (organization_id, id)` y `(organization_id, microchip_id) → microchips (organization_id, id)`. RLS sigue siendo obligatorio, pero no sustituye esta integridad referencial.
 
 ## Invariantes de seguridad y acceso
 

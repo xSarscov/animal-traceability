@@ -4,7 +4,7 @@ MVP web de identificación y trazabilidad animal mediante microchips RFID y lect
 
 ## Estado
 
-M4 — Inventario de microchips. La ruta privada `/microchips` muestra de forma read-only los microchips autorizados por RLS, con búsqueda local por código y filtro de estado. Escáner HID, cambios de inventario y registro de animales siguen fuera de alcance.
+M5 — Scanner HID. La ruta privada `/scan` recibe códigos mediante un formulario normal: el lector HID y la entrada manual comparten `Enter → normalización → validación → lookup` protegido por RLS. M6 (registro de animales) sigue fuera de alcance.
 
 ## Requisitos
 
@@ -42,7 +42,13 @@ Ambos pertenecen a `Animal Traceability Demo`. Estas credenciales no son secreto
 
 ## Inventario M4
 
-Después de iniciar sesión, abrir `/microchips`. La pantalla ejecuta solo una lectura de `microchips` bajo los grants y RLS de M3; no permite crear, editar, bloquear ni eliminar chips. Los filtros se ejecutan localmente sobre las filas ya autorizadas. M5 añadirá el scanner HID en un flujo separado.
+Después de iniciar sesión, abrir `/microchips`. La pantalla ejecuta solo una lectura de `microchips` bajo los grants y RLS de M3; no permite crear, editar, bloquear ni eliminar chips. Los filtros se ejecutan localmente sobre las filas ya autorizadas.
+
+## Scanner HID M5
+
+Después de iniciar sesión, abrir `/scan`. El `ScannerInput` toma el foco automáticamente y acepta tanto el W90D como escritura manual. El código se conserva como texto, se aplica `trim` y se exige un valor numérico de 10–20 dígitos (restricción v0.1, no una regla ISO universal). El lookup hace únicamente `SELECT` exacto de `microchips` y, solo para un chip `implanted`, `SELECT` de su animal asociado; no crea ni modifica datos.
+
+Los resultados son: “Microchip no reconocido”, “Microchip disponible”, “Microchip bloqueado” o navegación prevista a `/animals/:animalId` para uno implantado. M5 no usa WebUSB, Web Serial, Bluetooth, listeners globales ni heurísticas de teclado. La verificación física con W90D está pendiente; consulte `docs/DEMO.md` para el gate obligatorio y el fallback manual.
 
 ## Checks
 

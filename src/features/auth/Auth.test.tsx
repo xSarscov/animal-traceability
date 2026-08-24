@@ -100,6 +100,16 @@ describe('M3 authentication shell', () => {
     expect(screen.queryByText('Cerrar sesión')).not.toBeInTheDocument()
   })
 
+  it('redirects an unauthenticated visitor away from the scanner route', async () => {
+    await act(async () => {
+      await router.navigate('/scan')
+    })
+    render(<App />)
+
+    expect(await screen.findByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Escanear microchip' })).not.toBeInTheDocument()
+  })
+
   it('allows an authenticated user to access the private shell', async () => {
     authMock.getSession.mockResolvedValue({ data: { session: demoSession } })
     await act(async () => {

@@ -39,15 +39,17 @@ RPC previstas:
 - `get_public_animal_by_chip(code)`
 - `submit_recovery_report(chip_code, reporter_name, contact, message)`
 
-## Integración HID
+## Integración HID materializada en M5
 
-El W90D se ha comprobado como USB HID Keyboard: al escanear escribe los dígitos en el foco actual y termina con Enter. La pantalla `/scan` tendrá un `ScannerInput` que procesa `código → Enter → normalize → validate → lookup` y admite las fuentes conceptuales:
+El W90D se ha comprobado como USB HID Keyboard: al escanear escribe los dígitos en el foco actual y termina con Enter. La ruta privada `/scan` materializa un `ScannerInput` dentro de un formulario HTML normal: `código → submit por Enter → normalize → validate → lookup`. El mismo input admite entrada manual y un lector HID; la aplicación no intenta inferir la fuente.
 
 ```ts
 type ScannerSource = 'keyboard-hid' | 'manual'
 ```
 
-No se usará WebUSB, Web Serial, drivers ni código específico W90D. El código se manipula como texto normalizado —no número— para conservar posibles ceros iniciales. La validación v0.1 es conservadora: string, `trim`, solo dígitos y longitud razonable; no impone 15 dígitos como regla universal del dominio.
+No se usan WebUSB, Web Serial, Bluetooth, listeners globales de teclado, timing heuristics, drivers ni código específico W90D. El código se manipula como texto normalizado —no número— para conservar posibles ceros iniciales. La validación v0.1 es conservadora: `trim`, solo dígitos y 10–20 caracteres; no impone 15 dígitos como regla universal del dominio ni pretende caracterizar todos los formatos ISO 11784/11785.
+
+El lookup es solo lectura y realiza primero `microchips` por igualdad exacta de `code`, con `id`, `code` y `status`; solo si el estado es `implanted` consulta `animals` por `microchip_id` y recupera `id`. Nunca envía `organization_id`: los grants y RLS de M3 definen las filas visibles. Un chip inexistente o no visible por otro tenant se presenta como “Microchip no reconocido”, evitando revelar inventario ajeno. Los resultados son `unknown`, `available`, `blocked` e `implanted`; el último navega hacia la futura ruta `/animals/:animalId`, y `available` prepara el enlace de registro que M6 implementará. El escaneo no realiza writes (DR-005).
 
 Lectores Bluetooth HID futuros deben alimentar el mismo input y las mismas reglas de dominio. La futura app móvil preferirá Bluetooth HID, sin cambios de backend ni acoplamiento a fabricante.
 
@@ -89,7 +91,7 @@ El seed local crea los usuarios reproducibles `admin@animal-traceability.test` /
 
 La búsqueda parcial por código y el filtro de estado se aplican localmente sobre esa colección autorizada, mediante estado local y una lista visible derivada. Esto es suficiente para el inventario pequeño del MVP y evita una request por pulsación. Si el inventario supera esta escala, un milestone futuro podrá introducir paginación server-side sin convertir el filtro de cliente en mecanismo de autorización.
 
-La pantalla distingue loading, inventario vacío, filtros sin coincidencias y error con retry de la misma lectura. No implementa scanner, captura HID, lookup de escaneo, detalle de chip ni acciones de inventario; M5 sigue siendo responsable del escáner HID.
+La pantalla distingue loading, inventario vacío, filtros sin coincidencias y error con retry de la misma lectura. No implementa captura HID ni lookup de escaneo; ambos se incorporan por separado en M5.
 
 La ruta pública no obtiene tablas directamente. `get_public_animal_by_chip` devuelve solo `chipCode`, `name`, `species`, `breed`, `sex`, `color` y `status`. La creación anónima de un reporte ocurre exclusivamente mediante `submit_recovery_report`, que no concede lectura general de `recovery_reports`.
 

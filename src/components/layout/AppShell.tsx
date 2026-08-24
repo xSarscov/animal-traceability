@@ -41,6 +41,14 @@ export function AppShell() {
                 className={({ isActive }) =>
                   isActive ? 'text-emerald-800 underline underline-offset-4' : 'text-stone-600 hover:text-stone-950'
                 }
+                to="/scan"
+              >
+                Escanear
+              </NavLink>
+              <NavLink
+                className={({ isActive }) =>
+                  isActive ? 'text-emerald-800 underline underline-offset-4' : 'text-stone-600 hover:text-stone-950'
+                }
                 to="/microchips"
               >
                 Microchips

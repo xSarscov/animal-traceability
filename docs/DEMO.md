@@ -30,7 +30,7 @@ No usar este chip para crear un animal antes de iniciar la demo. Tras una demo c
 3. Escanear el chip físico.
    - Resultado: el lector escribe `990000015300168` y envía Enter; la aplicación normaliza, valida y consulta.
 4. Confirmar “Microchip disponible”.
-   - Resultado: no hay cambios automáticos de datos y aparece la acción “Registrar animal”.
+   - Resultado: no hay cambios automáticos de datos y aparece la acción “Registrar animal”. En M5 es solo un enlace preparado para M6; no completar el registro todavía.
 5. Elegir “Registrar animal” y completar el registro de un animal llamado Luna con su propietario.
    - Resultado: una transacción crea los datos requeridos, cambia el chip a `implanted` y crea los eventos `registration` e `implantation`.
 6. Volver a `/scan` y escanear el mismo chip.
@@ -57,6 +57,18 @@ No usar este chip para crear un animal antes de iniciar la demo. Tras una demo c
 5. Si el chip figura `blocked`, no intentar registrarlo ni desbloquearlo desde UI: verificar configuración/seed y restaurar el entorno de demo.
 6. Si el chip ya figura implantado por una demo anterior, restaurar el seed/entorno antes de repetir el flujo de disponible → registro.
 
+## Gate físico M5
+
+M5 usa exclusivamente un formulario HTML con el `ScannerInput` enfocado. El Enter enviado por el W90D ejecuta el submit normal: no hay WebUSB, Web Serial, Bluetooth, listener global ni heurística de velocidad. La entrada manual usa exactamente el mismo flujo y es un fallback de software, no una sustitución de la prueba física HID.
+
+Estado de validación física de M5: **NOT EXECUTED** hasta que se realice con el W90D real. Ejecutar y registrar este resultado antes de declarar el primer slice validado:
+
+1. Iniciar sesión como `staff@animal-traceability.test` y abrir `/scan`.
+2. Sin hacer clic, comprobar visualmente que el campo “Código del microchip” tiene foco.
+3. Leer el chip físico `990000015300168` con el W90D; si hace falta, pulsar su botón físico.
+4. Confirmar que el lector escribe el código y Enter, y que la página muestra “Microchip disponible”.
+5. Verificar en la base de datos que el chip sigue `available` y con `animal_count = 0`.
+
 ## Checklist previo a presentación
 
 - [ ] Migraciones aplicadas y seed de demo cargado.
@@ -66,6 +78,7 @@ No usar este chip para crear un animal antes de iniciar la demo. Tras una demo c
 - [ ] W90D, cable USB y puerto físico probados en un navegador real.
 - [ ] Escaneo real escribe el código y Enter en un campo simple.
 - [ ] `/scan` fue probado con lector y con entrada manual.
+- [ ] Gate físico M5 W90D → USB HID → navegador → Enter → “Microchip disponible” marcado PASS.
 - [ ] Perfil público fue probado en sesión anónima y no revela PII.
 - [ ] Flujo de reporte público y recovery inbox verificados.
 - [ ] Estados loading, empty y error revisados para pantallas de la demo.

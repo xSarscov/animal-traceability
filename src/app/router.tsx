@@ -1,6 +1,8 @@
-import { createBrowserRouter } from 'react-router'
+import { Navigate, createBrowserRouter } from 'react-router'
 
 import { AppShell } from '../components/layout/AppShell'
+import { LoginPage } from '../features/auth/LoginPage'
+import { RequireAuth } from '../features/auth/RequireAuth'
 
 function HomePage() {
   return (
@@ -11,7 +13,8 @@ function HomePage() {
           Identificación y trazabilidad animal
         </h1>
         <p className="mt-5 text-lg leading-8 text-stone-600">
-          Bootstrap técnico listo para los siguientes milestones.
+          La autenticación y el aislamiento de organizaciones están preparados. Las funcionalidades
+          de dominio se incorporarán en sus milestones correspondientes.
         </p>
       </section>
     </main>
@@ -31,9 +34,26 @@ function NotFoundPage() {
 
 export const router = createBrowserRouter([
   {
-    path: '/',
-    element: <AppShell />,
-    children: [{ index: true, element: <HomePage /> }],
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
+    element: <RequireAuth />,
+    children: [
+      {
+        path: '/',
+        element: <AppShell />,
+        children: [
+          { index: true, element: <HomePage /> },
+          { path: 'scan', element: <Navigate replace to="/" /> },
+          { path: 'animals', element: <Navigate replace to="/" /> },
+          { path: 'animals/new', element: <Navigate replace to="/" /> },
+          { path: 'animals/:animalId', element: <Navigate replace to="/" /> },
+          { path: 'microchips', element: <Navigate replace to="/" /> },
+          { path: 'recovery-reports', element: <Navigate replace to="/" /> },
+        ],
+      },
+    ],
   },
   {
     path: '*',

@@ -4,13 +4,13 @@ MVP web de identificación y trazabilidad animal mediante microchips RFID y lect
 
 ## Estado
 
-M2 — Base de datos. El schema, seed y pruebas pgTAP se desarrollan contra Supabase local. Auth, policies RLS, RPC y funcionalidades de producto pertenecen a milestones posteriores.
+M3 — Auth, multi-tenancy y RLS. El esquema se valida contra Supabase local; la UI se limita a login, rutas privadas y logout. Inventario, escáner y demás funcionalidades de dominio siguen fuera de alcance.
 
 ## Requisitos
 
 - Node.js >= 22.12
 - npm
-- Docker Desktop en ejecución para Supabase local
+- Docker Engine y Docker CLI disponibles desde Ubuntu en WSL para Supabase local
 
 ## Instalación y frontend
 
@@ -24,14 +24,21 @@ npm run dev
 
 ## Base de datos local
 
-```powershell
-npm run supabase:start
-npm run db:reset
-npm run db:test
-npm run db:types
+```bash
+supabase start
+supabase db reset
+supabase test db --local
+supabase gen types typescript --local --schema public > src/types/database.types.ts
 ```
 
-`db:reset` aplica las migrations y luego carga `supabase/seed.sql`. El seed crea una organización de demostración y deja el chip físico `990000015300168` como `available`, sin animal asociado.
+En esta máquina, ejecutar esos comandos desde Ubuntu/WSL para usar Docker CLI sin Docker Desktop. Los scripts npm equivalentes se mantienen para entornos donde la CLI local esté disponible. `db:reset` aplica las migrations y luego carga `supabase/seed.sql`.
+
+El seed local crea únicamente para demo:
+
+- `admin@animal-traceability.test` / `DemoAdmin123!` con rol `admin`.
+- `staff@animal-traceability.test` / `DemoStaff123!` con rol `staff`.
+
+Ambos pertenecen a `Animal Traceability Demo`. Estas credenciales no son secretos ni se deben usar en Supabase Cloud. El chip físico `990000015300168` queda `available`, sin animal asociado.
 
 ## Checks
 

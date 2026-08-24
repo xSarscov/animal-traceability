@@ -20,8 +20,9 @@ No cambiar silenciosamente la arquitectura, el stack aprobado, las rutas, el mod
 
 - `docs/DOMAIN_RULES.md` es normativo. No debilitar DR-001 a DR-008 mediante UI, migraciones, RPC ni excepciones ad hoc.
 - Las invariantes multi-entidad se implementan mediante transacciones PostgreSQL/RPC, nunca como múltiples escrituras independientes desde React.
-- RLS no sustituye la integridad referencial entre tenants: un animal, su microchip y su propietario deben pertenecer a la misma organización. En M2 se elegirá y documentará el refuerzo PostgreSQL efectivo antes de implementar operaciones que puedan violarlo.
+- RLS no sustituye la integridad referencial entre tenants: un animal, su microchip y su propietario deben pertenecer a la misma organización. Desde M2, FKs compuestas entre `animals`, `owners` y `microchips` imponen DR-008 en PostgreSQL; no sustituirlas por validaciones de React ni debilitarlas.
 - Mantener RLS en todas las tablas privadas. No desactivarlo ni usar políticas abiertas como `USING (true)` para resolver problemas.
+- Desde M3, Auth, grants explícitos y RLS forman conjuntamente la frontera de acceso. No tratar el frontend, una URL conocida ni Supabase JS como controles de autorización.
 - Los usuarios anónimos no tienen acceso directo a datos privados. La ficha pública y el envío de reportes deben pasar por funciones limitadas que no devuelvan PII del propietario.
 - No almacenar secretos en el repositorio. Mantener `.env.example` sin valores sensibles cuando llegue el milestone correspondiente.
 

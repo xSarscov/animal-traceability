@@ -79,9 +79,12 @@ No debe ser posible crear ni modificar un animal de modo que produzca referencia
 
 ## Invariantes de seguridad y acceso
 
-- Un usuario autenticado solo lee o modifica datos privados de organizaciones de las que sea miembro.
-- RLS protege todas las tablas privadas; no se permiten políticas abiertas como `USING (true)`.
-- Un anónimo no consulta directamente `owners`, `animals`, `microchips`, `animal_events`, `organizations` ni `organization_members`.
+- La frontera de acceso es `GRANT + RLS + integridad PostgreSQL`; React no es un control de autorización.
+- En M3, un usuario autenticado solo puede leer datos privados de organizaciones de las que sea miembro. No tiene escrituras directas sobre tablas de dominio.
+- RLS protege todas las tablas privadas y grants explícitos limitan el rol `authenticated` a `SELECT`; no se permiten políticas abiertas como `USING (true)`.
+- Un anónimo no tiene grants ni consulta directamente `owners`, `animals`, `microchips`, `animal_events`, `recovery_reports`, `organizations` ni `organization_members`.
+- Staff ve únicamente su propia membership; admin ve todas las memberships de las organizaciones donde su rol es `admin`. La diferencia de rol no concede writes en M3.
+- Los eventos y reportes heredan organización desde su animal. Sus policies resuelven esa relación mediante helpers privados para no depender de policies recursivas.
 - `get_public_animal_by_chip(code)` solo devuelve el contrato público documentado en `ARCHITECTURE.md`.
 - `submit_recovery_report(...)` permite crear un reporte desde el código del chip sin otorgar lectura directa ni acceso general a `recovery_reports`.
 

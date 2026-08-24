@@ -57,7 +57,7 @@ Lectores Bluetooth HID futuros deben alimentar el mismo input y las mismas regla
 
 Todas las tablas privadas tendrán RLS. Un miembro solo puede acceder a las organizaciones de las que forma parte. No se permiten políticas abiertas ni SELECT anónimo directo sobre organizaciones, miembros, propietarios, animales, microchips o eventos.
 
-RLS controla el acceso, pero no reemplaza la integridad referencial multi-tenant. En M2 se definirá el mecanismo PostgreSQL efectivo —preferiblemente claves/constraints compuestas cuando resulte apropiado, junto con RPC transaccionales— para impedir que un animal quede referenciando un microchip o propietario de otra organización.
+RLS controla el acceso, pero no reemplaza la integridad referencial multi-tenant. Desde M2, FKs compuestas impiden que un animal quede referenciando un microchip o propietario de otra organización.
 
 ## Base de datos materializada en M2
 
@@ -67,7 +67,21 @@ DR-008 se impone mediante FKs compuestas desde `animals` hacia `owners (organiza
 
 La cardinalidad de microchip se impone mediante constraint triggers `DEFERRABLE INITIALLY DEFERRED` en `microchips` y `animals`. Al final de cada transacción validan que `available` y `blocked` tengan cero animales y que `implanted` tenga exactamente uno; la UNIQUE de `animals.microchip_id` sigue impidiendo más de uno. Esto permite a M6 construir una transición coherente dentro de una única transacción sin aceptar estados finales inválidos.
 
-RLS se habilita en todas las tablas privadas desde M2, pero no existen policies hasta M3. pgTAP vive en `supabase/tests/database/`. Tras levantar el stack local, `supabase gen types typescript --local --schema public` genera `src/types/database.types.ts`, que el cliente Supabase tipará como `Database`.
+RLS se habilita en todas las tablas privadas desde M2. pgTAP vive en `supabase/tests/database/`. Tras levantar el stack local, `supabase gen types typescript --local --schema public` genera `src/types/database.types.ts`, que el cliente Supabase tipa como `Database`.
+
+## Auth, grants y RLS materializados en M3
+
+M3 usa Supabase Auth con email/password. `AuthProvider` obtiene una sesión con `getSession`, mantiene una única suscripción a `onAuthStateChange` y deja el almacenamiento de JWT al cliente oficial. `/login` es la única pantalla nueva; las rutas privadas documentadas se protegen mediante `RequireAuth`, y el shell autenticado expone solo el email actual y logout. No se implementan consultas ni UI de dominio.
+
+El schema `private` no se expone en `[api].schemas`. Contiene helpers `SECURITY DEFINER`, `STABLE` y con `search_path = pg_catalog, public`: `is_organization_member(organization_id)`, `is_organization_admin(organization_id)` y `can_access_animal(animal_id)`. Cada helper deriva la identidad exclusivamente de `auth.uid()` y consulta tablas con nombres calificados; ningún caller aporta un `user_id` arbitrario. `anon` no tiene `USAGE` ni `EXECUTE`; `authenticated` tiene únicamente lo necesario para evaluar policies.
+
+Los helpers de cardinalidad de M2 ahora son `SECURITY DEFINER` con `search_path` seguro y sus permisos de ejecución directa se revocan para `PUBLIC`, `anon` y `authenticated`. Así los constraint triggers leen el estado completo aunque una policy limite filas al usuario. `set_updated_at` permanece `SECURITY INVOKER`, pues no necesita privilegios ampliados, pero tampoco es ejecutable directamente por roles de aplicación.
+
+En las siete tablas privadas se revocan privilegios de `PUBLIC`, `anon` y `authenticated`; después, solo `authenticated` recibe `SELECT`. No hay grants de escritura ni policies de escritura. Las policies SELECT son: `organizations_select_for_members`, `organization_members_select_self_or_admin`, `owners_select_for_members`, `microchips_select_for_members`, `animals_select_for_members`, `animal_events_select_for_members` y `recovery_reports_select_for_members`. La visibilidad de memberships distingue roles: staff solo ve su propia fila; admin ve todas las memberships de las organizaciones que administra.
+
+La matriz M3 es: `anon` no tiene acceso directo a ninguna tabla privada; `authenticated` miembro lee organizaciones, propietarios, microchips y animales de sus organizaciones, y eventos/reportes derivados de esos animales; todos los writes directos están denegados. Un admin solo gana visibilidad adicional sobre memberships de su organización, no escrituras administrativas. Operaciones de escritura llegarán únicamente en su milestone y mediante el mecanismo previsto.
+
+El seed local crea los usuarios reproducibles `admin@animal-traceability.test` / `DemoAdmin123!` y `staff@animal-traceability.test` / `DemoStaff123!`, ambos miembros de `Animal Traceability Demo`. Son credenciales exclusivas de desarrollo local, no credenciales Cloud. Las pruebas pgTAP de M3 ejecutan requests simulados como admin/staff de dos organizaciones y como `anon`, además de comprobar grants, RLS, helpers y el hardening de funciones.
 
 La ruta pública no obtiene tablas directamente. `get_public_animal_by_chip` devuelve solo `chipCode`, `name`, `species`, `breed`, `sex`, `color` y `status`. La creación anónima de un reporte ocurre exclusivamente mediante `submit_recovery_report`, que no concede lectura general de `recovery_reports`.
 

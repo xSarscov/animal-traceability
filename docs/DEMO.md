@@ -2,7 +2,12 @@
 
 ## Preparación de entorno
 
-Cuando los milestones correspondientes estén implementados, preparar una organización, un usuario de personal con membresía, el frontend configurado contra el proyecto Supabase de demo y la base de datos migrada. Cargar el seed de demostración antes de la presentación.
+Preparar el frontend contra Supabase local, levantar el stack desde Ubuntu/WSL y cargar el seed de demostración antes de la presentación. M3 ya incluye la organización `Animal Traceability Demo` y dos usuarios locales reproducibles:
+
+- Administrador: `admin@animal-traceability.test` / `DemoAdmin123!`.
+- Personal: `staff@animal-traceability.test` / `DemoStaff123!`.
+
+Ambos pertenecen a la organización demo; las credenciales son exclusivamente locales y nunca deben copiarse a Supabase Cloud. Antes de la demo, verificar login y membership con el rol que se vaya a usar.
 
 El seed debe contener el chip físico real sin vincular a animal:
 
@@ -57,6 +62,7 @@ No usar este chip para crear un animal antes de iniciar la demo. Tras una demo c
 - [ ] Migraciones aplicadas y seed de demo cargado.
 - [ ] `990000015300168` existe, está `available` y no tiene animal asociado; no está `blocked` ni `implanted`.
 - [ ] Usuario de personal y membresía de organización probados.
+- [ ] Login y logout locales probados con `staff@animal-traceability.test`; el acceso anónimo no revela tablas privadas.
 - [ ] W90D, cable USB y puerto físico probados en un navegador real.
 - [ ] Escaneo real escribe el código y Enter en un campo simple.
 - [ ] `/scan` fue probado con lector y con entrada manual.

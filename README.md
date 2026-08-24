@@ -4,7 +4,7 @@ MVP web de identificación y trazabilidad animal mediante microchips RFID y lect
 
 ## Estado
 
-M5 — Scanner HID. La ruta privada `/scan` recibe códigos mediante un formulario normal: el lector HID y la entrada manual comparten `Enter → normalización → validación → lookup` protegido por RLS. M6 (registro de animales) sigue fuera de alcance.
+M6 — Registro transaccional de animal. `/animals/new?chip=...` permite registrar un animal con propietario nuevo o existente mediante una única RPC PostgreSQL. Perfil y timeline siguen fuera de alcance (M7).
 
 ## Requisitos
 
@@ -48,7 +48,13 @@ Después de iniciar sesión, abrir `/microchips`. La pantalla ejecuta solo una l
 
 Después de iniciar sesión, abrir `/scan`. El `ScannerInput` toma el foco automáticamente y acepta tanto el W90D como escritura manual. El código se conserva como texto, se aplica `trim` y se exige un valor numérico de 10–20 dígitos (restricción v0.1, no una regla ISO universal). El lookup hace únicamente `SELECT` exacto de `microchips` y, solo para un chip `implanted`, `SELECT` de su animal asociado; no crea ni modifica datos.
 
-Los resultados son: “Microchip no reconocido”, “Microchip disponible”, “Microchip bloqueado” o navegación prevista a `/animals/:animalId` para uno implantado. M5 no usa WebUSB, Web Serial, Bluetooth, listeners globales ni heurísticas de teclado. La verificación física con W90D está pendiente; consulte `docs/DEMO.md` para el gate obligatorio y el fallback manual.
+Los resultados son: “Microchip no reconocido”, “Microchip disponible”, “Microchip bloqueado” o navegación prevista a `/animals/:animalId` para uno implantado. M5 no usa WebUSB, Web Serial, Bluetooth, listeners globales ni heurísticas de teclado. El gate físico W90D ya obtuvo PASS; consulte `docs/DEMO.md` para su registro y el fallback manual.
+
+## Registro M6
+
+La ruta privada `/animals/new?chip=<code>` realiza un preflight de lectura bajo RLS y solo muestra el formulario para un chip visible `available`. El código no se edita allí. Al enviar, React usa exclusivamente `rpc('register_animal_with_chip', ...)`: no inserta propietarios o animales, no actualiza microchips ni inserta eventos directamente.
+
+La RPC obtiene el usuario desde `auth.uid()`, deriva la organización desde el chip, comprueba membresía y toma un lock `FOR UPDATE`. Dentro de una sola transacción crea o reutiliza el propietario, crea el animal, cambia el chip a `implanted` y agrega los eventos “Animal registrado” y “Microchip implantado” con `performed_by` igual al usuario autenticado. M7 implementará la ficha y timeline.
 
 ## Checks
 

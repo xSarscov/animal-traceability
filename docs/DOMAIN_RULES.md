@@ -49,7 +49,7 @@ Un microchip se asocia como máximo a un animal. `animals.microchip_id` es UNIQU
 
 ### DR-003 — Registro e implantación
 
-Para registrar un animal con chip, el chip debe estar `available`. `register_animal_with_chip(...)` debe ejecutar en una sola transacción: crear propietario cuando corresponda, crear animal, actualizar el chip a `implanted`, insertar evento `registration` e insertar evento `implantation`. Si falla cualquier paso, todo hace rollback. React no puede repartir esta operación en múltiples writes independientes.
+Para registrar un animal con chip, el chip debe estar `available`. Desde M6, `register_animal_with_chip(...)` ejecuta en una sola transacción: crear propietario cuando corresponda, crear animal, actualizar el chip a `implanted`, insertar evento `registration` e insertar evento `implantation`. Si falla cualquier paso, todo hace rollback. React no puede repartir esta operación en múltiples writes independientes.
 
 ### DR-004 — Historial append-only
 

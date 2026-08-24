@@ -305,6 +305,23 @@ export type Database = {
         Args: { chip_id_to_check: string }
         Returns: undefined
       }
+      register_animal_with_chip: {
+        Args: {
+          p_animal_name: string
+          p_birth_date: string
+          p_breed: string
+          p_chip_code: string
+          p_color: string
+          p_existing_owner_id: string
+          p_owner_address: string
+          p_owner_email: string
+          p_owner_full_name: string
+          p_owner_phone: string
+          p_sex: Database["public"]["Enums"]["animal_sex"]
+          p_species: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       animal_event_type:
@@ -460,3 +477,4 @@ export const Constants = {
     },
   },
 } as const
+

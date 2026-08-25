@@ -4,7 +4,7 @@ MVP web de identificación y trazabilidad animal mediante microchips RFID y lect
 
 ## Estado
 
-M10 — Recovery Inbox. La ruta privada `/recovery-reports` permite al personal autorizado consultar los reportes visibles bajo RLS y avanzar exclusivamente `pending → reviewed → closed` mediante RPCs transaccionales. M11 (dashboard) sigue pendiente.
+M11 — Dashboard simple. La ruta privada `/` muestra cinco métricas operativas bajo RLS: animales registrados, microchips disponibles e implantados, animales perdidos y reportes pendientes. M12 (QA y demo final) sigue pendiente.
 
 ## Requisitos
 
@@ -78,7 +78,13 @@ Cuando el estado público es `lost`, el formulario usa `submit_recovery_report`.
 
 `/recovery-reports` está dentro de `RequireAuth` y del shell privado. Lee reportes bajo la policy RLS existente y carga en lotes los animales y microchips relacionados; la PII del reportante solo se muestra en esa superficie privada. El filtro de estado es local y el orden es `created_at DESC`.
 
-Las transiciones `pending → reviewed` y `reviewed → closed` usan respectivamente `mark_recovery_report_reviewed` y `close_recovery_report`. Ambas RPC son `SECURITY DEFINER`, verifican membership derivada del animal y bloquean el reporte con `FOR UPDATE`. No existe `UPDATE` directo para `authenticated`; `closed` es terminal y las transiciones no cambian el estado del animal ni escriben eventos. M11 será responsable del dashboard.
+Las transiciones `pending → reviewed` y `reviewed → closed` usan respectivamente `mark_recovery_report_reviewed` y `close_recovery_report`. Ambas RPC son `SECURITY DEFINER`, verifican membership derivada del animal y bloquean el reporte con `FOR UPDATE`. No existe `UPDATE` directo para `authenticated`; `closed` es terminal y las transiciones no cambian el estado del animal ni escriben eventos.
+
+## Dashboard M11
+
+`/` es un dashboard privado dentro de `RequireAuth` y `AppShell`. Ejecuta en paralelo cinco consultas `SELECT id` con `count: 'exact'` y `head: true` sobre `animals`, `microchips` y `recovery_reports`; no descarga colecciones, no usa `organization_id`, no crea RPCs ni cambia seguridad. RLS define el universo contado, por lo que un usuario con varias memberships obtiene el total de todas las filas que ya puede leer.
+
+El resumen es deliberadamente eventual entre sus cinco lecturas: no necesita snapshot transaccional ni agregador backend para el MVP. Muestra loading, error con retry y los ceros como valores válidos, además del CTA principal “Escanear microchip” hacia `/scan`. No incluye gráficas, analytics, polling ni realtime. M12 sigue pendiente.
 
 ## Checks
 

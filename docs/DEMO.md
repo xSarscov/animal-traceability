@@ -87,6 +87,10 @@ Estado: **PASS**. Se ejecutó con un contexto de navegador independiente y sin s
 
 Estado: **PASS**. Tras el gate de readiness se registró Luna, se marcó como perdida y un contexto anónimo real envió el reporte `pending`. Como staff, `/recovery-reports` mostró los datos privados del reportante, avanzó el reporte a `reviewed`, abrió el animal y lo marcó como encontrado. El inbox conservó el reporte cuando Luna ya estaba `active` y permitió cerrarlo en `closed`. La base confirmó un único reporte cerrado, Luna `active` y el microchip `implanted` antes del reset final.
 
+## Validación M11 — Dashboard simple
+
+Estado: **PASS**. Tras el gate de readiness, el dashboard privado mostró el baseline `0 / 1 / 0 / 0 / 0` (animales, disponibles, implantados, perdidos, reportes pendientes). Después de registrar Luna mostró `1 / 0 / 1 / 0 / 0`; tras marcarla perdida y enviar un reporte anónimo real mostró `1 / 0 / 1 / 1 / 1`; luego de revisar el reporte y marcar a Luna encontrada mostró `1 / 0 / 1 / 0 / 0`. El reset final restauró el chip de demo disponible, sin animal ni reportes.
+
 ## Checklist previo a presentación
 
 - [ ] Migraciones aplicadas y seed de demo cargado.
@@ -100,6 +104,7 @@ Estado: **PASS**. Tras el gate de readiness se registró Luna, se marcó como pe
 - [x] Perfil público fue probado en sesión anónima y no revela PII.
 - [x] Flujo de reporte público verificado; crea un reporte `pending` sin conceder lectura anónima.
 - [x] Smoke Recovery Inbox: pending → reviewed → animal encontrado → closed.
+- [x] Dashboard: baseline, registro, perdido, reporte pendiente, revisado y encontrado.
 - [ ] Estados loading, empty y error revisados para pantallas de la demo.
 - [ ] TypeScript, lint, pruebas relevantes y build aprobados para el milestone desplegado.
 - [ ] Plan de restauración del seed disponible entre demostraciones.

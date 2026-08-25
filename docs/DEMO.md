@@ -42,9 +42,9 @@ No usar este chip para crear un animal antes de iniciar la demo. Tras una demo c
 9. Marcar a Luna como perdida.
    - Resultado: el estado cambia de `active` a `lost` y aparece un evento `status_change` mediante una operación transaccional.
 10. Abrir `/public/990000015300168` en contexto anónimo.
-   - Resultado esperado para M9: muestra que Luna está perdida y solo datos públicos; no expone propietario, contacto, dirección ni IDs internos. Esta ruta todavía no está implementada.
+   - Resultado: muestra que Luna está perdida y solo datos públicos; no expone propietario, contacto, dirección ni IDs internos.
 11. Enviar un reporte de “animal encontrado”.
-   - Resultado esperado para M9: se crea un `recovery_report` `pending` sin conceder al visitante acceso a los datos privados.
+   - Resultado: se crea un `recovery_report` `pending` sin conceder al visitante acceso a los datos privados.
 12. Volver como personal a `/recovery-reports`.
    - Resultado esperado para M10: se ve el reporte pendiente asociado a Luna.
 
@@ -71,6 +71,10 @@ Estado: **PASS**. Se ejecutó con el usuario local `staff@animal-traceability.te
 
 Estado: **PASS**. Se ejecutó con `staff@animal-traceability.test`: registro de Luna, transición a perdido, reescaneo hacia el mismo perfil sin alterar el estado y transición a encontrado. La base confirmó dos eventos `status_change`, ambos realizados por el usuario staff. Después se ejecuta `db reset` para restaurar el chip de demo.
 
+## Validación M9 — ficha pública/reporte
+
+Estado: **PASS**. Se ejecutó con un contexto de navegador independiente y sin sesión (`localStorage.length = 0`): se registró Luna con datos canario de propietario, se marcó como perdida y se abrió `/public/990000015300168`. La ficha mostró únicamente los campos públicos aprobados; no expuso nombre, teléfono, email ni dirección del propietario. El visitante anónimo envió un reporte y la base confirmó un único `recovery_report` asociado con estado `pending`. Tras la validación se ejecutó `db reset`; el chip `990000015300168` volvió a `available`, sin animales asociados y sin reportes de recuperación.
+
 ## Checklist previo a presentación
 
 - [ ] Migraciones aplicadas y seed de demo cargado.
@@ -81,8 +85,9 @@ Estado: **PASS**. Se ejecutó con `staff@animal-traceability.test`: registro de 
 - [ ] Escaneo real escribe el código y Enter en un campo simple.
 - [ ] `/scan` fue probado con lector y con entrada manual.
 - [x] Gate físico M5 W90D → USB HID → navegador → Enter → “Microchip disponible”.
-- [ ] Perfil público fue probado en sesión anónima y no revela PII.
-- [ ] Flujo de reporte público y recovery inbox verificados.
+- [x] Perfil público fue probado en sesión anónima y no revela PII.
+- [x] Flujo de reporte público verificado; crea un reporte `pending` sin conceder lectura anónima.
+- [ ] Recovery inbox pendiente de M10.
 - [ ] Estados loading, empty y error revisados para pantallas de la demo.
 - [ ] TypeScript, lint, pruebas relevantes y build aprobados para el milestone desplegado.
 - [ ] Plan de restauración del seed disponible entre demostraciones.

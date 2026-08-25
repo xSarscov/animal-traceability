@@ -115,7 +115,13 @@ La búsqueda parcial por código y el filtro de estado se aplican localmente sob
 
 La pantalla distingue loading, inventario vacío, filtros sin coincidencias y error con retry de la misma lectura. No implementa captura HID ni lookup de escaneo; ambos se incorporan por separado en M5.
 
-La ruta pública no obtiene tablas directamente. `get_public_animal_by_chip` devuelve solo `chipCode`, `name`, `species`, `breed`, `sex`, `color` y `status`. La creación anónima de un reporte ocurre exclusivamente mediante `submit_recovery_report`, que no concede lectura general de `recovery_reports`.
+## Superficie pública segura materializada en M9
+
+`/public/:chipCode` se renderiza fuera de `RequireAuth` y de `AppShell`. Su feature solo usa RPC: no contiene consultas directas a `animals`, `microchips`, `owners` ni `recovery_reports`. `get_public_animal_by_chip(text)` es `STABLE SECURITY DEFINER`, fija `search_path = pg_catalog, public` y retorna exactamente `chip_code`, `name`, `species`, `breed`, `sex`, `color` y `status`; consulta únicamente `microchips` y `animals`. Solo hay resultado para un chip `implanted` con animal asociado. Los demás casos públicos son indistinguibles y devuelven cero filas.
+
+`submit_recovery_report(text, text, text, text)` también es `SECURITY DEFINER` con el mismo `search_path`. Normaliza y limita el input, deriva el animal desde el chip y acepta solo un animal `lost`. Obtiene `FOR SHARE OF animal` antes del INSERT para coordinarse con el `FOR UPDATE` de M8: si `found` gana la carrera, el reporte se rechaza de forma segura. Inserta exclusivamente `pending`; no recibe animal, organización, propietario, estado ni timestamps del navegador.
+
+Ambas funciones revocan ejecución de `PUBLIC` y conceden `EXECUTE` explícito a `anon` y `authenticated`. M9 no concede grants de tabla ni policies anónimas: `anon` sigue sin `SELECT` directo sobre tablas privadas ni `INSERT` sobre `recovery_reports`. M10, todavía pendiente, será la única milestone que materialice el inbox de personal.
 
 ## Estructura prevista
 

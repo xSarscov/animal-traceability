@@ -65,7 +65,7 @@ Desde M8, `active → lost` se materializa por `mark_animal_lost(...)` en una tr
 
 ### DR-007 — Privacidad pública
 
-La ficha pública nunca expone nombre, teléfono, email o dirección del propietario; tampoco IDs internos ni información administrativa privada. Esta protección es responsabilidad del backend/base de datos y no solo de React.
+La ficha pública nunca expone nombre, teléfono, email o dirección del propietario; tampoco IDs internos ni información administrativa privada. Esta protección es responsabilidad del backend/base de datos y no solo de React. Desde M9, `get_public_animal_by_chip(...)` materializa la proyección segura sin consultar `owners`, y `submit_recovery_report(...)` es la única vía anónima para crear un reporte `pending`, sin otorgar lectura directa de `recovery_reports`.
 
 ### DR-008 — Consistencia de organización
 

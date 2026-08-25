@@ -305,6 +305,18 @@ export type Database = {
         Args: { chip_id_to_check: string }
         Returns: undefined
       }
+      get_public_animal_by_chip: {
+        Args: { p_chip_code: string }
+        Returns: {
+          breed: string
+          chip_code: string
+          color: string
+          name: string
+          sex: Database["public"]["Enums"]["animal_sex"]
+          species: string
+          status: Database["public"]["Enums"]["animal_status"]
+        }[]
+      }
       mark_animal_found: {
         Args: { p_animal_id: string }
         Returns: Database["public"]["Enums"]["animal_status"]
@@ -329,6 +341,15 @@ export type Database = {
           p_species: string
         }
         Returns: string
+      }
+      submit_recovery_report: {
+        Args: {
+          p_chip_code: string
+          p_contact: string
+          p_message: string
+          p_reporter_name: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

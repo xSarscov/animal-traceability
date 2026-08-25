@@ -262,7 +262,7 @@ describe('AnimalProfilePage', () => {
     resolveProfileB?.(profileB)
     expect(await screen.findByRole('heading', { name: 'Bruno' })).toBeInTheDocument()
     expect(screen.getByText('Propietario B')).toBeInTheDocument()
-    expect(screen.getByText('Nota de Bruno')).toBeInTheDocument()
+    expect(await screen.findByText('Nota de Bruno')).toBeInTheDocument()
 
     await user.type(screen.getByLabelText('Vacuna *'), 'Triple felina')
     await user.click(screen.getByRole('button', { name: 'Registrar vacunación' }))

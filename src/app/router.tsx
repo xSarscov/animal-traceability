@@ -6,6 +6,7 @@ import { AnimalRegistrationPage } from '../features/animals/AnimalRegistrationPa
 import { LoginPage } from '../features/auth/LoginPage'
 import { RequireAuth } from '../features/auth/RequireAuth'
 import { MicrochipInventoryPage } from '../features/microchips/MicrochipInventoryPage'
+import { PublicAnimalPage } from '../features/recovery/PublicAnimalPage'
 import { ScanPage } from '../features/scanner/ScanPage'
 
 function HomePage() {
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/public/:chipCode',
+    element: <PublicAnimalPage />,
   },
   {
     element: <RequireAuth />,

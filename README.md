@@ -4,7 +4,7 @@ MVP web de identificación y trazabilidad animal mediante microchips RFID y lect
 
 ## Estado
 
-M8 — Perdido/encontrado transaccional. `/animals/:animalId` muestra animal, microchip, propietario autorizado e historial; permite agregar vacunaciones, notas y ejecutar las transiciones seguras perdido/encontrado. La ficha pública sigue pendiente en M9.
+M9 — Ficha pública segura + reporte de recuperación. `/public/:chipCode` funciona sin sesión mediante RPCs de proyección limitada; no concede acceso anónimo directo a tablas privadas. Los reportes públicos solo se aceptan para animales perdidos y quedan `pending`. El inbox de personal sigue pendiente en M10.
 
 ## Requisitos
 
@@ -65,6 +65,12 @@ M7 permite únicamente INSERT directo de `vaccination` y `note` sobre `animal_ev
 ## Perdido/encontrado M8
 
 M8 usa las RPC `mark_animal_lost` y `mark_animal_found` para cambiar `active → lost` y `lost → active`. Cada RPC bloquea el animal, verifica membership y crea el `status_change` dentro de la misma transacción. El navegador no recibe permiso para actualizar `animals` ni insertar `status_change` directamente.
+
+## Ficha pública y recuperación M9
+
+La ruta pública `/public/:chipCode` está fuera de `RequireAuth` y del shell privado. Solo llama a `get_public_animal_by_chip`, que devuelve código, nombre, especie, raza, sexo, color y estado para un microchip implantado; no consulta ni devuelve propietarios, PII o IDs internos. `unknown`, `available` y `blocked` comparten el mismo resultado de no encontrado.
+
+Cuando el estado público es `lost`, el formulario usa `submit_recovery_report`. Esa RPC valida y normaliza los datos, deriva el animal desde el chip y crea exclusivamente un reporte `pending`. No hay grants ni policies anónimas sobre `recovery_reports`; el visitante tampoco puede leer el reporte creado. M10 será responsable del inbox y de sus transiciones de estado.
 
 ## Checks
 

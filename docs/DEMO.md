@@ -63,6 +63,10 @@ M5 usa exclusivamente un formulario HTML con el `ScannerInput` enfocado. El Ente
 
 Estado de validación física de M5: **PASS**. El gate ejecutado fue W90D físico → USB → navegador real → `/scan` → ScannerInput → `990000015300168` → Enter → Supabase → “Microchip disponible”. La entrada manual también fue validada.
 
+## Segundo vertical slice M6–M7
+
+Estado: **NOT EXECUTED**. Para aprobarlo localmente: registrar Luna desde el chip disponible, abrir “Ver perfil”, comprobar los eventos iniciales, registrar una vacunación y una nota, y reescanear el chip para volver al mismo perfil. Tras la prueba debe ejecutarse `db reset` para restaurar el chip de demo a `available` sin animal asociado.
+
 ## Checklist previo a presentación
 
 - [ ] Migraciones aplicadas y seed de demo cargado.

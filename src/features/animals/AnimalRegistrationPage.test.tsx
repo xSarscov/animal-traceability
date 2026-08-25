@@ -147,6 +147,7 @@ describe('AnimalRegistrationPage', () => {
     expect(registerAnimalWithChip).toHaveBeenCalledWith(expect.objectContaining({ chipCode: '990000015300168', values: expect.objectContaining({ animalName: 'Luna', species: 'Perro', sex: 'female', ownerFullName: 'Propietario Demo' }) }))
     expect(await screen.findByText('Animal registrado')).toBeInTheDocument()
     expect(screen.getByText(/Luna quedó asociado al microchip 990000015300168/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ver perfil' })).toHaveAttribute('href', '/animals/animal-id')
     expect(screen.getByRole('link', { name: 'Volver a escanear' })).toHaveAttribute('href', '/scan')
   })
 

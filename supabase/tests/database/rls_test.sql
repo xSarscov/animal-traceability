@@ -197,8 +197,8 @@ select ok(
   'authenticated cannot insert, update, or delete animals'
 );
 select ok(
-  not has_table_privilege('authenticated', 'public.animal_events', 'insert, update, delete'),
-  'authenticated cannot insert, update, or delete animal events'
+  not has_table_privilege('authenticated', 'public.animal_events', 'update, delete'),
+  'authenticated cannot update or delete animal events'
 );
 select ok(
   not has_table_privilege('authenticated', 'public.recovery_reports', 'insert, update, delete'),

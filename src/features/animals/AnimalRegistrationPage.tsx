@@ -36,7 +36,7 @@ function AnimalRegistrationFlow({ chipCode }: { chipCode: string | null }) {
   const [owners, setOwners] = useState<ExistingOwner[] | null>(null)
   const [ownersError, setOwnersError] = useState(false)
   const [submissionError, setSubmissionError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<{ animalName: string; chipCode: string } | null>(null)
+  const [success, setSuccess] = useState<{ animalId: string; animalName: string; chipCode: string } | null>(null)
   const form = useForm<AnimalRegistrationFormValues, unknown, ParsedAnimalRegistrationFormValues>({
     defaultValues: animalRegistrationDefaultValues,
     resolver: zodResolver(animalRegistrationSchema),
@@ -89,8 +89,8 @@ function AnimalRegistrationFlow({ chipCode }: { chipCode: string | null }) {
     const parsed = values
 
     try {
-      await registerAnimalWithChip({ chipCode: preflight.microchip.code, values: parsed })
-      setSuccess({ animalName: parsed.animalName, chipCode: preflight.microchip.code })
+      const animalId = await registerAnimalWithChip({ chipCode: preflight.microchip.code, values: parsed })
+      setSuccess({ animalId, animalName: parsed.animalName, chipCode: preflight.microchip.code })
     } catch (error) {
       setSubmissionError(
         error instanceof Error && error.message.includes('ya no está disponible')
@@ -107,7 +107,10 @@ function AnimalRegistrationFlow({ chipCode }: { chipCode: string | null }) {
           <h1 className="text-2xl font-semibold text-stone-950">Animal registrado</h1>
           <p className="mt-3 text-stone-700">{success.animalName} quedó asociado al microchip {success.chipCode}.</p>
           <p className="mt-1 text-stone-700">El microchip quedó implantado.</p>
-          <Link className="mt-5 inline-flex rounded-md bg-emerald-800 px-4 py-2 text-sm font-semibold text-white" to="/scan">
+          <Link className="mt-5 inline-flex rounded-md bg-stone-950 px-4 py-2 text-sm font-semibold text-white" to={`/animals/${success.animalId}`}>
+            Ver perfil
+          </Link>
+          <Link className="mt-5 ml-3 inline-flex rounded-md bg-emerald-800 px-4 py-2 text-sm font-semibold text-white" to="/scan">
             Volver a escanear
           </Link>
         </section>

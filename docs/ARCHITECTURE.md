@@ -61,6 +61,14 @@ En una transacción de PostgreSQL, la función resuelve un propietario existente
 
 Lectores Bluetooth HID futuros deben alimentar el mismo input y las mismas reglas de dominio. La futura app móvil preferirá Bluetooth HID, sin cambios de backend ni acoplamiento a fabricante.
 
+## Perfil privado y timeline materializados en M7
+
+`/animals/:animalId` valida el UUID antes de consultar. Bajo RLS obtiene el animal por ID y, solo si es visible, consulta su microchip y propietario privado. La timeline usa `SELECT id, event_type, title, description, metadata, occurred_at FROM animal_events WHERE animal_id = ... ORDER BY occurred_at DESC`. Un ID inexistente o de otra organización produce el mismo resultado privado: “Animal no encontrado”.
+
+M7 materializa el primer write directo simple bajo RLS: `INSERT` sobre `animal_events`, coherente con la arquitectura aprobada porque es una sola fila y no modifica invariantes multi-entidad. El grant es por columnas (`animal_id`, `event_type`, `title`, `description`, `metadata`) y la policy `animal_events_insert_vaccination_or_note_for_members` exige miembro del animal, `event_type IN ('vaccination', 'note')` y `performed_by = auth.uid()` tras aplicar el default de PostgreSQL. La UI nunca envía campos auditables; `occurred_at` y `created_at` usan defaults del servidor. UPDATE y DELETE siguen sin grants ni policies.
+
+La vacunación se guarda como `animal_events.metadata` JSONB y se interpreta mediante validación segura en la timeline. No se crean tablas clínicas ni RPCs genéricas de eventos. M8 mantiene la responsabilidad exclusiva de `status_change` y lost/found.
+
 ## Supabase, multi-tenancy y privacidad
 
 `auth.users` es la identidad de autenticación; no crear una tabla duplicada `users` sin una necesidad posterior real. Las organizaciones delimitan los datos privados y `organization_members` decide qué usuarios pueden acceder a cada una.

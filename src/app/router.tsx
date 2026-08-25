@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter } from 'react-router'
 
 import { AppShell } from '../components/layout/AppShell'
+import { AnimalProfilePage } from '../features/animals/AnimalProfilePage'
 import { AnimalRegistrationPage } from '../features/animals/AnimalRegistrationPage'
 import { LoginPage } from '../features/auth/LoginPage'
 import { RequireAuth } from '../features/auth/RequireAuth'
@@ -51,7 +52,7 @@ export const router = createBrowserRouter([
           { path: 'scan', element: <ScanPage /> },
           { path: 'animals', element: <Navigate replace to="/" /> },
           { path: 'animals/new', element: <AnimalRegistrationPage /> },
-          { path: 'animals/:animalId', element: <Navigate replace to="/" /> },
+          { path: 'animals/:animalId', element: <AnimalProfilePage /> },
           { path: 'microchips', element: <MicrochipInventoryPage /> },
           { path: 'recovery-reports', element: <Navigate replace to="/" /> },
         ],

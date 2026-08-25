@@ -4,7 +4,7 @@ MVP web de identificación y trazabilidad animal mediante microchips RFID y lect
 
 ## Estado
 
-M6 — Registro transaccional de animal. `/animals/new?chip=...` permite registrar un animal con propietario nuevo o existente mediante una única RPC PostgreSQL. Perfil y timeline siguen fuera de alcance (M7).
+M7 — Perfil privado y timeline. `/animals/:animalId` muestra animal, microchip, propietario autorizado e historial; permite agregar vacunaciones y notas bajo RLS. Perdido/encontrado sigue fuera de alcance (M8).
 
 ## Requisitos
 
@@ -54,7 +54,13 @@ Los resultados son: “Microchip no reconocido”, “Microchip disponible”, �
 
 La ruta privada `/animals/new?chip=<code>` realiza un preflight de lectura bajo RLS y solo muestra el formulario para un chip visible `available`. El código no se edita allí. Al enviar, React usa exclusivamente `rpc('register_animal_with_chip', ...)`: no inserta propietarios o animales, no actualiza microchips ni inserta eventos directamente.
 
-La RPC obtiene el usuario desde `auth.uid()`, deriva la organización desde el chip, comprueba membresía y toma un lock `FOR UPDATE`. Dentro de una sola transacción crea o reutiliza el propietario, crea el animal, cambia el chip a `implanted` y agrega los eventos “Animal registrado” y “Microchip implantado” con `performed_by` igual al usuario autenticado. M7 implementará la ficha y timeline.
+La RPC obtiene el usuario desde `auth.uid()`, deriva la organización desde el chip, comprueba membresía y toma un lock `FOR UPDATE`. Dentro de una sola transacción crea o reutiliza el propietario, crea el animal, cambia el chip a `implanted` y agrega los eventos “Animal registrado” y “Microchip implantado” con `performed_by` igual al usuario autenticado. M7 materializa la ficha y timeline privados.
+
+## Perfil y timeline M7
+
+La ruta privada `/animals/:animalId` valida el UUID, consulta primero el animal bajo RLS y solo después consulta su microchip y propietario. La timeline recupera `animal_events` en orden `occurred_at DESC`; el propietario es PII privado y nunca se reutiliza en una ruta pública.
+
+M7 permite únicamente INSERT directo de `vaccination` y `note` sobre `animal_events`. El grant está limitado a `animal_id`, `event_type`, `title`, `description` y `metadata`; PostgreSQL deriva `performed_by` con `auth.uid()` y define los timestamps. No hay UPDATE ni DELETE de eventos.
 
 ## Checks
 

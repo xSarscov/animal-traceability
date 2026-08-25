@@ -10,6 +10,23 @@ export type RegistrationMicrochip = Pick<
 
 export type ExistingOwner = Pick<Database['public']['Tables']['owners']['Row'], 'email' | 'full_name' | 'id' | 'phone'>
 
+type RegisterAnimalWithChipPayload = {
+  p_chip_code: string
+  p_animal_name: string
+  p_species: string
+  p_breed: string | null
+  p_sex: Database['public']['Enums']['animal_sex']
+  p_birth_date: string | null
+  p_color: string | null
+  p_existing_owner_id: string | null
+  p_owner_full_name: string | null
+  p_owner_phone: string | null
+  p_owner_email: string | null
+  p_owner_address: string | null
+}
+
+type GeneratedRegisterAnimalWithChipArgs = Database['public']['Functions']['register_animal_with_chip']['Args']
+
 export class RegistrationDataError extends Error {
   readonly kind: 'generic' | 'unavailable'
 
@@ -52,7 +69,7 @@ export async function registerAnimalWithChip(input: {
   values: ParsedAnimalRegistrationFormValues
 }): Promise<string> {
   const { values } = input
-  const args = {
+  const args: RegisterAnimalWithChipPayload = {
     p_chip_code: input.chipCode,
     p_animal_name: values.animalName,
     p_species: values.species,
@@ -67,7 +84,11 @@ export async function registerAnimalWithChip(input: {
     p_owner_address: values.ownerMode === 'new' ? values.ownerAddress : null,
   }
 
-  const { data, error } = await supabase.rpc('register_animal_with_chip', args as never)
+  // The CLI-generated function arguments currently do not preserve SQL nullable
+  // parameters. Keep the payload typed accurately, then narrow only at the
+  // Supabase client boundary until generation represents that nullability.
+  const generatedArgs = args as unknown as GeneratedRegisterAnimalWithChipArgs
+  const { data, error } = await supabase.rpc('register_animal_with_chip', generatedArgs)
 
   if (error || !data) {
     throw new RegistrationDataError(error?.code === 'P0001' ? 'unavailable' : 'generic')

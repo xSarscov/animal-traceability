@@ -27,6 +27,11 @@ export function AnimalRegistrationPage() {
   const [searchParams] = useSearchParams()
   const rawChipCode = searchParams.get('chip')
   const chipCode = rawChipCode ? normalizeMicrochipCode(rawChipCode) : null
+
+  return <AnimalRegistrationFlow key={chipCode ?? '__missing-chip__'} chipCode={chipCode} />
+}
+
+function AnimalRegistrationFlow({ chipCode }: { chipCode: string | null }) {
   const [preflight, setPreflight] = useState<PreflightState>(() => getInitialPreflight(chipCode))
   const [owners, setOwners] = useState<ExistingOwner[] | null>(null)
   const [ownersError, setOwnersError] = useState(false)

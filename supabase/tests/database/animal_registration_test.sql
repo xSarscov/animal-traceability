@@ -1,5 +1,5 @@
 begin;
-select plan(41);
+select plan(46);
 
 insert into auth.users (id, email)
 values
@@ -219,6 +219,49 @@ select throws_ok(
 select is((select count(*) from public.animals where microchip_id = 'c3000000-0000-4000-8000-000000000001'), 1::bigint, 'same chip still has exactly one animal after duplicate attempt');
 select is((select count(*) from public.animal_events where animal_id = (select id from public.animals where microchip_id = 'c3000000-0000-4000-8000-000000000001')), 2::bigint, 'same chip still has exactly two initial events after duplicate attempt');
 select is((select count(*) from public.owners where full_name = 'duplicate owner'), 0::bigint, 'duplicate attempt creates no owner');
+
+reset role;
+
+create function public.test_fail_registration_event_for_rollback()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.event_type = 'registration'::public.animal_event_type
+    and exists (
+      select 1
+      from public.animals as animal
+      where animal.id = new.animal_id
+        and animal.name = 'Rollback marker animal'
+    ) then
+    raise exception 'Forced event failure for rollback test.';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger test_fail_registration_event_for_rollback
+before insert on public.animal_events
+for each row
+execute function public.test_fail_registration_event_for_rollback();
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'c0000000-0000-4000-8000-000000000001', true);
+select throws_ok(
+  $$
+    select public.register_animal_with_chip(
+      '990000000000606', 'Rollback marker animal', 'Perro', null, 'unknown', null, null,
+      null, 'Rollback marker owner', null, null, null
+    )
+  $$,
+  'P0001', 'Forced event failure for rollback test.',
+  'event trigger forces a failure after the registration RPC has written rows'
+);
+select is((select count(*) from public.owners where full_name = 'Rollback marker owner'), 0::bigint, 'forced event failure rolls back the new owner');
+select is((select count(*) from public.animals where name = 'Rollback marker animal'), 0::bigint, 'forced event failure rolls back the animal');
+select is((select status from public.microchips where code = '990000000000606'), 'available'::public.microchip_status, 'forced event failure restores the chip availability');
+select is((select count(*) from public.animal_events where animal_id in (select id from public.animals where name = 'Rollback marker animal')), 0::bigint, 'forced event failure leaves no events');
 
 reset role;
 select * from finish();

@@ -1,6 +1,6 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const getRegistrationMicrochip = vi.hoisted(() => vi.fn())
@@ -16,6 +16,7 @@ vi.mock('./animal-registration', () => ({
 import { AnimalRegistrationPage } from './AnimalRegistrationPage'
 
 const availableChip = { id: 'chip-id', code: '990000015300168', organization_id: 'org-id', status: 'available' as const }
+const availableChipB = { id: 'chip-id-b', code: '990000015300169', organization_id: 'org-id-b', status: 'available' as const }
 
 function renderPage(path = '/animals/new?chip=990000015300168') {
   return render(
@@ -29,6 +30,17 @@ function deferred<T>() {
   let resolve: (value: T) => void = () => undefined
   const promise = new Promise<T>((resolvePromise) => { resolve = resolvePromise })
   return { promise, resolve }
+}
+
+function SearchParamChangeHarness() {
+  const navigate = useNavigate()
+
+  return (
+    <>
+      <button type="button" onClick={() => navigate(`/animals/new?chip=${availableChipB.code}`)}>Cambiar a chip B</button>
+      <AnimalRegistrationPage />
+    </>
+  )
 }
 
 describe('AnimalRegistrationPage', () => {
@@ -74,6 +86,34 @@ describe('AnimalRegistrationPage', () => {
     expect(screen.getByText('Ingresa la especie.')).toBeInTheDocument()
     expect(screen.getByText('Ingresa el nombre completo del propietario.')).toBeInTheDocument()
     expect(registerAnimalWithChip).not.toHaveBeenCalled()
+  })
+
+  it('clears stale preflight state immediately when the chip query parameter changes', async () => {
+    const user = userEvent.setup()
+    const chipARequest = deferred<typeof availableChip | null>()
+    const chipBRequest = deferred<typeof availableChipB | null>()
+    getRegistrationMicrochip.mockImplementation((code: string) => code === availableChip.code ? chipARequest.promise : chipBRequest.promise)
+
+    render(
+      <MemoryRouter initialEntries={[`/animals/new?chip=${availableChip.code}`]}>
+        <Routes><Route path="/animals/new" element={<SearchParamChangeHarness />} /><Route path="/scan" element={<p>Escáner</p>} /></Routes>
+      </MemoryRouter>,
+    )
+
+    chipARequest.resolve(availableChip)
+    expect(await screen.findByText(availableChip.code)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Registrar animal' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Cambiar a chip B' }))
+
+    expect(screen.getByRole('heading', { name: 'Comprobando microchip…' })).toBeInTheDocument()
+    expect(screen.queryByText(availableChip.code)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Registrar animal' })).not.toBeInTheDocument()
+
+    chipBRequest.resolve(availableChipB)
+    expect(await screen.findByText(availableChipB.code)).toBeInTheDocument()
+    expect(screen.queryByText(availableChip.code)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Registrar animal' })).toBeInTheDocument()
   })
 
   it('loads existing owners only when that mode is selected', async () => {

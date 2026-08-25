@@ -6,10 +6,13 @@ import { z } from 'zod'
 
 import { formatDate, formatDateTime } from '../../lib/dates'
 import {
+  AnimalStatusChangeError,
   createNoteEvent,
   createVaccinationEvent,
   getAnimalProfile,
   listAnimalEvents,
+  markAnimalFound,
+  markAnimalLost,
   type AnimalEvent,
   type AnimalProfile,
 } from './animal-profile'
@@ -71,6 +74,9 @@ function AnimalProfileFlow({ animalId }: { animalId: string | null }) {
 function AnimalProfileContent({ profile }: { profile: AnimalProfile }) {
   const [timelineState, setTimelineState] = useState<TimelineState>({ kind: 'loading' })
   const [timelineVersion, setTimelineVersion] = useState(0)
+  const [animalStatus, setAnimalStatus] = useState(profile.animal.status)
+  const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [isChangingStatus, setIsChangingStatus] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -84,6 +90,30 @@ function AnimalProfileContent({ profile }: { profile: AnimalProfile }) {
     setTimelineState({ kind: 'loading' })
     setTimelineVersion((version) => version + 1)
   }
+  const changeAnimalStatus = async () => {
+    if (animalStatus === 'deceased' || isChangingStatus) return
+
+    setStatusMessage(null)
+    setIsChangingStatus(true)
+    try {
+      if (animalStatus === 'active') {
+        await markAnimalLost(profile.animal.id)
+        setAnimalStatus('lost')
+        setStatusMessage('Animal marcado como perdido.')
+      } else {
+        await markAnimalFound(profile.animal.id)
+        setAnimalStatus('active')
+        setStatusMessage('Animal marcado como encontrado.')
+      }
+      refreshTimeline()
+    } catch (error) {
+      setStatusMessage(error instanceof AnimalStatusChangeError && error.kind === 'conflict'
+        ? 'El estado del animal cambió o la acción ya no está disponible.'
+        : 'No fue posible cambiar el estado del animal.')
+    } finally {
+      setIsChangingStatus(false)
+    }
+  }
   const { animal, microchip, owner } = profile
 
   return (
@@ -92,7 +122,8 @@ function AnimalProfileContent({ profile }: { profile: AnimalProfile }) {
         <p className="text-sm font-semibold text-emerald-700">Perfil privado</p>
         <h1 className="mt-2 text-4xl font-semibold tracking-tight text-stone-950">{animal.name}</h1>
         <p className="mt-2 text-lg text-stone-700">{animal.species} · {sexLabel(animal.sex)}</p>
-        <p className="mt-3 inline-flex rounded-full bg-stone-100 px-3 py-1 text-sm font-semibold text-stone-800">{statusLabel(animal.status)}</p>
+        <p className="mt-3 inline-flex rounded-full bg-stone-100 px-3 py-1 text-sm font-semibold text-stone-800">{statusLabel(animalStatus)}</p>
+        <AnimalStatusAction status={animalStatus} isSubmitting={isChangingStatus} message={statusMessage} onChange={changeAnimalStatus} />
       </header>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -120,6 +151,31 @@ function AnimalProfileContent({ profile }: { profile: AnimalProfile }) {
       </section>
     </main>
   )
+}
+
+function AnimalStatusAction({
+  isSubmitting,
+  message,
+  onChange,
+  status,
+}: {
+  isSubmitting: boolean
+  message: string | null
+  onChange: () => void
+  status: AnimalProfile['animal']['status']
+}) {
+  if (status === 'deceased') return null
+  const isLost = status === 'lost'
+  const label = isLost ? 'Marcar como encontrado' : 'Marcar como perdido'
+  const progressLabel = isLost ? 'Marcando como encontrado…' : 'Marcando como perdido…'
+  const isError = message?.startsWith('No fue') || message?.startsWith('El estado')
+
+  return <div className="mt-4">
+    <button className="rounded-md border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-950 disabled:opacity-60" disabled={isSubmitting} onClick={onChange} type="button">
+      {isSubmitting ? progressLabel : label}
+    </button>
+    {message ? <p className={`mt-2 text-sm ${isError ? 'text-red-700' : 'text-emerald-700'}`} role={isError ? 'alert' : 'status'}>{message}</p> : null}
+  </div>
 }
 
 function Timeline({ events }: { events: AnimalEvent[] }) {

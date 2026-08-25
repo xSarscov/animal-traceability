@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const from = vi.hoisted(() => vi.fn())
-vi.mock('../../lib/supabase', () => ({ supabase: { from } }))
+const rpc = vi.hoisted(() => vi.fn())
+vi.mock('../../lib/supabase', () => ({ supabase: { from, rpc } }))
 
-import { createNoteEvent, createVaccinationEvent, getAnimalProfile, listAnimalEvents } from './animal-profile'
+import { AnimalStatusChangeError, createNoteEvent, createVaccinationEvent, getAnimalProfile, listAnimalEvents, markAnimalFound, markAnimalLost } from './animal-profile'
 
 function singleQuery(result: unknown) {
   const maybeSingle = vi.fn().mockResolvedValue(result)
@@ -13,7 +14,7 @@ function singleQuery(result: unknown) {
 }
 
 describe('animal profile data access', () => {
-  beforeEach(() => from.mockReset())
+  beforeEach(() => { from.mockReset(); rpc.mockReset() })
 
   it('loads only the private profile fields through RLS-protected individual queries', async () => {
     const animal = singleQuery({ data: { id: 'animal', microchip_id: 'chip', owner_id: 'owner' }, error: null })
@@ -56,5 +57,25 @@ describe('animal profile data access', () => {
     from.mockReturnValue({ insert })
     await createNoteEvent({ animalId: 'animal', values: { title: 'Nota', description: null } })
     expect(insert).toHaveBeenCalledWith({ animal_id: 'animal', event_type: 'note', title: 'Nota', description: null, metadata: {} })
+  })
+
+  it('changes lost status only through the explicit mark_animal_lost RPC', async () => {
+    rpc.mockResolvedValue({ data: 'lost', error: null })
+    await expect(markAnimalLost('animal')).resolves.toBe('lost')
+    expect(rpc).toHaveBeenCalledWith('mark_animal_lost', { p_animal_id: 'animal' })
+    expect(from).not.toHaveBeenCalled()
+  })
+
+  it('changes found status only through the explicit mark_animal_found RPC', async () => {
+    rpc.mockResolvedValue({ data: 'active', error: null })
+    await expect(markAnimalFound('animal')).resolves.toBe('active')
+    expect(rpc).toHaveBeenCalledWith('mark_animal_found', { p_animal_id: 'animal' })
+    expect(from).not.toHaveBeenCalled()
+  })
+
+  it('rejects an unexpected or conflicting status RPC result safely', async () => {
+    rpc.mockResolvedValueOnce({ data: 'active', error: null }).mockResolvedValueOnce({ data: null, error: { code: 'P0001' } })
+    await expect(markAnimalLost('animal')).rejects.toBeInstanceOf(AnimalStatusChangeError)
+    await expect(markAnimalLost('animal')).rejects.toMatchObject({ kind: 'conflict' })
   })
 })

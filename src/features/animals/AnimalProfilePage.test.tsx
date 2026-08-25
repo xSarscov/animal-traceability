@@ -7,12 +7,21 @@ const getAnimalProfile = vi.hoisted(() => vi.fn())
 const listAnimalEvents = vi.hoisted(() => vi.fn())
 const createVaccinationEvent = vi.hoisted(() => vi.fn())
 const createNoteEvent = vi.hoisted(() => vi.fn())
+const markAnimalLost = vi.hoisted(() => vi.fn())
+const markAnimalFound = vi.hoisted(() => vi.fn())
+const AnimalStatusChangeError = vi.hoisted(() => class AnimalStatusChangeError extends Error {
+  readonly kind: 'conflict' | 'generic'
+  constructor(kind: 'conflict' | 'generic') { super('status change failed'); this.kind = kind }
+})
 
 vi.mock('./animal-profile', () => ({
   getAnimalProfile,
   listAnimalEvents,
   createVaccinationEvent,
   createNoteEvent,
+  markAnimalLost,
+  markAnimalFound,
+  AnimalStatusChangeError,
 }))
 
 import { AnimalProfilePage } from './AnimalProfilePage'
@@ -57,6 +66,8 @@ describe('AnimalProfilePage', () => {
     listAnimalEvents.mockReset()
     createVaccinationEvent.mockReset()
     createNoteEvent.mockReset()
+    markAnimalLost.mockReset()
+    markAnimalFound.mockReset()
   })
   afterEach(cleanup)
 
@@ -76,12 +87,29 @@ describe('AnimalProfilePage', () => {
     expect(screen.getByText('Activo')).toBeInTheDocument()
     expect(screen.getByText('990000015300168')).toBeInTheDocument()
     expect(screen.getByText('Propietario Demo')).toBeInTheDocument()
-    expect(screen.getByText(/Vacuna: Rabia · Lote: DEMO-RAB-001/)).toBeInTheDocument()
+    expect(await screen.findByText(/Vacuna: Rabia · Lote: DEMO-RAB-001/)).toBeInTheDocument()
     expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual(expect.arrayContaining([
       expect.stringContaining('Revisión general'), expect.stringContaining('Vacunación: Rabia'), expect.stringContaining('Microchip implantado'), expect.stringContaining('Animal registrado'),
     ]))
     expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('Revisión general')
     expect(screen.queryByText('owner-id')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Marcar como perdido' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Marcar como encontrado' })).not.toBeInTheDocument()
+  })
+
+  it('shows only the found action for a lost animal and no status action for deceased', async () => {
+    getAnimalProfile.mockResolvedValueOnce({ ...profile, animal: { ...profile.animal, status: 'lost' as const } })
+    listAnimalEvents.mockResolvedValue([])
+    const first = renderProfile()
+    expect(await screen.findByText('Perdido')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Marcar como encontrado' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Marcar como perdido' })).not.toBeInTheDocument()
+    first.unmount()
+
+    getAnimalProfile.mockResolvedValueOnce({ ...profile, animal: { ...profile.animal, status: 'deceased' as const } })
+    renderProfile()
+    expect(await screen.findByText('Fallecido')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Marcar como/ })).not.toBeInTheDocument()
   })
 
   it('does not query Supabase for an invalid UUID', async () => {
@@ -151,6 +179,58 @@ describe('AnimalProfilePage', () => {
     await user.click(screen.getByRole('button', { name: 'Registrar vacunación' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('No fue posible registrar la vacunación.')
     expect(screen.getByLabelText('Vacuna *')).toHaveValue('Rabia')
+  })
+
+  it('marks an active animal as lost once, updates the badge and refreshes the timeline', async () => {
+    const user = userEvent.setup()
+    let resolveLost: (() => void) | undefined
+    getAnimalProfile.mockResolvedValue(profile)
+    listAnimalEvents.mockResolvedValueOnce(events).mockResolvedValueOnce([{ ...events[0], id: 'lost-event', event_type: 'status_change', title: 'Animal marcado como perdido' }, ...events])
+    markAnimalLost.mockReturnValue(new Promise<void>((resolve) => { resolveLost = resolve }))
+    renderProfile()
+    await screen.findByRole('heading', { name: 'Luna' })
+    const button = screen.getByRole('button', { name: 'Marcar como perdido' })
+    await user.click(button)
+    expect(markAnimalLost).toHaveBeenCalledOnce()
+    expect(markAnimalLost).toHaveBeenCalledWith(animalId)
+    expect(screen.getByRole('button', { name: 'Marcando como perdido…' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Marcando como perdido…' }))
+    expect(markAnimalLost).toHaveBeenCalledOnce()
+    resolveLost?.()
+    expect(await screen.findByText('Animal marcado como perdido.')).toBeInTheDocument()
+    expect(screen.getByText('Perdido')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Marcar como encontrado' })).toBeInTheDocument()
+    await waitFor(() => expect(listAnimalEvents).toHaveBeenCalledTimes(2))
+    expect(screen.getByText('Animal marcado como perdido')).toBeInTheDocument()
+  })
+
+  it('marks a lost animal as found and refreshes confirmed timeline data', async () => {
+    const user = userEvent.setup()
+    getAnimalProfile.mockResolvedValue({ ...profile, animal: { ...profile.animal, status: 'lost' as const } })
+    listAnimalEvents.mockResolvedValueOnce(events).mockResolvedValueOnce([{ ...events[0], id: 'found-event', event_type: 'status_change', title: 'Animal marcado como encontrado' }, ...events])
+    markAnimalFound.mockResolvedValue(undefined)
+    renderProfile()
+    await screen.findByText('Perdido')
+    await user.click(screen.getByRole('button', { name: 'Marcar como encontrado' }))
+    await waitFor(() => expect(markAnimalFound).toHaveBeenCalledWith(animalId))
+    expect(await screen.findByText('Animal marcado como encontrado.')).toBeInTheDocument()
+    expect(screen.getByText('Activo')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Marcar como perdido' })).toBeInTheDocument()
+    await waitFor(() => expect(listAnimalEvents).toHaveBeenCalledTimes(2))
+  })
+
+  it('keeps the visible status and does not refresh the timeline after a failed status change', async () => {
+    const user = userEvent.setup()
+    getAnimalProfile.mockResolvedValue(profile)
+    listAnimalEvents.mockResolvedValue(events)
+    markAnimalLost.mockRejectedValue(new AnimalStatusChangeError('conflict'))
+    renderProfile()
+    await screen.findByRole('heading', { name: 'Luna' })
+    await user.click(screen.getByRole('button', { name: 'Marcar como perdido' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('El estado del animal cambió o la acción ya no está disponible.')
+    expect(screen.getByText('Activo')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Marcar como perdido' })).toBeEnabled()
+    expect(listAnimalEvents).toHaveBeenCalledTimes(1)
   })
 
   it('immediately resets the complete profile flow when the route changes from A to B', async () => {

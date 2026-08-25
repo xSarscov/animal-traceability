@@ -25,6 +25,15 @@ export type AnimalProfile = {
 
 export class AnimalProfileDataError extends Error {}
 
+export class AnimalStatusChangeError extends Error {
+  readonly kind: 'conflict' | 'generic'
+
+  constructor(kind: 'conflict' | 'generic') {
+    super('No fue posible cambiar el estado del animal.')
+    this.kind = kind
+  }
+}
+
 export async function getAnimalProfile(animalId: string): Promise<AnimalProfile | null> {
   const { data: animal, error: animalError } = await supabase
     .from('animals')
@@ -93,4 +102,27 @@ export async function createNoteEvent(input: {
     metadata: {},
   })
   if (error) throw new AnimalProfileDataError()
+}
+
+export async function markAnimalLost(animalId: string): Promise<'lost'> {
+  return changeAnimalStatus('mark_animal_lost', animalId, 'lost')
+}
+
+export async function markAnimalFound(animalId: string): Promise<'active'> {
+  return changeAnimalStatus('mark_animal_found', animalId, 'active')
+}
+
+async function changeAnimalStatus<TExpectedStatus extends 'active' | 'lost'>(
+  functionName: 'mark_animal_lost' | 'mark_animal_found',
+  animalId: string,
+  expectedStatus: TExpectedStatus,
+): Promise<TExpectedStatus> {
+  const { data, error } = await supabase.rpc(functionName, { p_animal_id: animalId })
+
+  if (error) {
+    throw new AnimalStatusChangeError(error.code === 'P0001' ? 'conflict' : 'generic')
+  }
+  if (data !== expectedStatus) throw new AnimalStatusChangeError('generic')
+
+  return expectedStatus
 }

@@ -69,6 +69,12 @@ M7 materializa el primer write directo simple bajo RLS: `INSERT` sobre `animal_e
 
 La vacunación se guarda como `animal_events.metadata` JSONB y se interpreta mediante validación segura en la timeline. No se crean tablas clínicas ni RPCs genéricas de eventos. M8 mantiene la responsabilidad exclusiva de `status_change` y lost/found.
 
+## Perdido/encontrado transaccional materializado en M8
+
+M8 implementa `public.mark_animal_lost(p_animal_id uuid)` y `public.mark_animal_found(p_animal_id uuid)`. Ambas RPC son `SECURITY DEFINER`, fijan `search_path = pg_catalog, public`, obtienen el caller con `auth.uid()` y verifican membresía explícita contra la organización derivada del animal. No aceptan organización, usuario, estado, evento ni timestamp desde React.
+
+Cada función adquiere `SELECT ... FOR UPDATE` sobre el animal, reevalúa el estado tras el lock y solo permite `active → lost` o `lost → active`, respectivamente. Dentro de la misma transacción actualiza `animals.status` e inserta el `status_change` con título y `performed_by` definidos en PostgreSQL. Ante un fallo, incluidos los de inserción del evento, PostgreSQL revierte también el cambio de estado. `authenticated` conserva sin grant/policy de `UPDATE` sobre `animals`, y M7 no se amplía: la inserción directa sigue limitada a `vaccination` y `note`.
+
 ## Supabase, multi-tenancy y privacidad
 
 `auth.users` es la identidad de autenticación; no crear una tabla duplicada `users` sin una necesidad posterior real. Las organizaciones delimitan los datos privados y `organization_members` decide qué usuarios pueden acceder a cada una.

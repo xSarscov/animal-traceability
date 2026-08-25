@@ -4,7 +4,7 @@ MVP web de identificación y trazabilidad animal mediante microchips RFID y lect
 
 ## Estado
 
-M7 — Perfil privado y timeline. `/animals/:animalId` muestra animal, microchip, propietario autorizado e historial; permite agregar vacunaciones y notas bajo RLS. Perdido/encontrado sigue fuera de alcance (M8).
+M8 — Perdido/encontrado transaccional. `/animals/:animalId` muestra animal, microchip, propietario autorizado e historial; permite agregar vacunaciones, notas y ejecutar las transiciones seguras perdido/encontrado. La ficha pública sigue pendiente en M9.
 
 ## Requisitos
 
@@ -61,6 +61,10 @@ La RPC obtiene el usuario desde `auth.uid()`, deriva la organización desde el c
 La ruta privada `/animals/:animalId` valida el UUID, consulta primero el animal bajo RLS y solo después consulta su microchip y propietario. La timeline recupera `animal_events` en orden `occurred_at DESC`; el propietario es PII privado y nunca se reutiliza en una ruta pública.
 
 M7 permite únicamente INSERT directo de `vaccination` y `note` sobre `animal_events`. El grant está limitado a `animal_id`, `event_type`, `title`, `description` y `metadata`; PostgreSQL deriva `performed_by` con `auth.uid()` y define los timestamps. No hay UPDATE ni DELETE de eventos.
+
+## Perdido/encontrado M8
+
+M8 usa las RPC `mark_animal_lost` y `mark_animal_found` para cambiar `active → lost` y `lost → active`. Cada RPC bloquea el animal, verifica membership y crea el `status_change` dentro de la misma transacción. El navegador no recibe permiso para actualizar `animals` ni insertar `status_change` directamente.
 
 ## Checks
 

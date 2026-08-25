@@ -42,11 +42,11 @@ No usar este chip para crear un animal antes de iniciar la demo. Tras una demo c
 9. Marcar a Luna como perdida.
    - Resultado: el estado cambia de `active` a `lost` y aparece un evento `status_change` mediante una operación transaccional.
 10. Abrir `/public/990000015300168` en contexto anónimo.
-    - Resultado: muestra que Luna está perdida y solo datos públicos; no expone propietario, contacto, dirección ni IDs internos.
+   - Resultado esperado para M9: muestra que Luna está perdida y solo datos públicos; no expone propietario, contacto, dirección ni IDs internos. Esta ruta todavía no está implementada.
 11. Enviar un reporte de “animal encontrado”.
-    - Resultado: se crea un `recovery_report` `pending` sin conceder al visitante acceso a los datos privados.
+   - Resultado esperado para M9: se crea un `recovery_report` `pending` sin conceder al visitante acceso a los datos privados.
 12. Volver como personal a `/recovery-reports`.
-    - Resultado: se ve el reporte pendiente asociado a Luna.
+   - Resultado esperado para M10: se ve el reporte pendiente asociado a Luna.
 
 ## Plan de recuperación si falla el lector
 
@@ -66,6 +66,10 @@ Estado de validación física de M5: **PASS**. El gate ejecutado fue W90D físic
 ## Segundo vertical slice M6–M7
 
 Estado: **PASS**. Se ejecutó con el usuario local `staff@animal-traceability.test`: escaneo del chip disponible, registro de Luna, apertura de “Ver perfil”, verificación de los eventos iniciales, registro de una vacunación y una nota, y reescaneo hacia el mismo perfil. Después se ejecutó `db reset`; el chip volvió a `available` sin animal asociado.
+
+## Validación M8 — Perdido/encontrado
+
+Estado: **PASS**. Se ejecutó con `staff@animal-traceability.test`: registro de Luna, transición a perdido, reescaneo hacia el mismo perfil sin alterar el estado y transición a encontrado. La base confirmó dos eventos `status_change`, ambos realizados por el usuario staff. Después se ejecuta `db reset` para restaurar el chip de demo.
 
 ## Checklist previo a presentación
 
@@ -87,4 +91,4 @@ Estado: **PASS**. Se ejecutó con el usuario local `staff@animal-traceability.te
 
 Primer vertical slice (M0–M5): W90D → USB → navegador → escanear `990000015300168` → Enter → Supabase → “Microchip disponible”. No proceder al registro completo sin esta prueba física.
 
-Segundo vertical slice (M6–M7): escaneo disponible → registrar Luna → reescanear → perfil de Luna → timeline. Desde aquí el MVP ya es demostrable; M8–M13 completan pérdida/encontrado, ficha pública, inbox, dashboard, QA y despliegue.
+Segundo vertical slice (M6–M7): escaneo disponible → registrar Luna → reescanear → perfil de Luna → timeline. Desde aquí el MVP ya es demostrable; M8 ya añade perdido/encontrado y M9–M13 completan ficha pública, inbox, dashboard, QA y despliegue.

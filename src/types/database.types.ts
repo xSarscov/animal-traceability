@@ -305,6 +305,14 @@ export type Database = {
         Args: { chip_id_to_check: string }
         Returns: undefined
       }
+      mark_animal_found: {
+        Args: { p_animal_id: string }
+        Returns: Database["public"]["Enums"]["animal_status"]
+      }
+      mark_animal_lost: {
+        Args: { p_animal_id: string }
+        Returns: Database["public"]["Enums"]["animal_status"]
+      }
       register_animal_with_chip: {
         Args: {
           p_animal_name: string

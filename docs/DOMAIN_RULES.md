@@ -61,7 +61,7 @@ El escaneo es solo lectura. Nunca provoca automáticamente cambio de propietario
 
 ### DR-006 — Estados perdido/encontrado
 
-`active → lost` se realiza por `mark_animal_lost(...)` en una transacción que actualiza `animals.status` e inserta `animal_events` de tipo `status_change`. `lost → active` se realiza del mismo modo por `mark_animal_found(...)`. No se infiere ni cambia un estado a partir de un escaneo.
+Desde M8, `active → lost` se materializa por `mark_animal_lost(...)` en una transacción que actualiza `animals.status` e inserta `animal_events` de tipo `status_change`. `lost → active` se materializa del mismo modo por `mark_animal_found(...)`. No se infiere ni cambia un estado a partir de un escaneo.
 
 ### DR-007 — Privacidad pública
 

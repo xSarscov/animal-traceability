@@ -40,13 +40,18 @@ const uuidSchema = z.string().uuid()
 export function AnimalProfilePage() {
   const { animalId } = useParams()
   const validAnimalId = animalId && uuidSchema.safeParse(animalId).success ? animalId : null
-  const [profileState, setProfileState] = useState<ProfileState>(() => validAnimalId ? { kind: 'loading' } : { kind: 'not-found' })
+
+  return <AnimalProfileFlow key={validAnimalId ?? animalId ?? '__invalid-animal__'} animalId={validAnimalId} />
+}
+
+function AnimalProfileFlow({ animalId }: { animalId: string | null }) {
+  const [profileState, setProfileState] = useState<ProfileState>(() => animalId ? { kind: 'loading' } : { kind: 'not-found' })
   const [retryVersion, setRetryVersion] = useState(0)
 
   useEffect(() => {
-    if (!validAnimalId) return
+    if (!animalId) return
     let active = true
-    void getAnimalProfile(validAnimalId)
+    void getAnimalProfile(animalId)
       .then((profile) => {
         if (active) setProfileState(profile ? { kind: 'loaded', profile } : { kind: 'not-found' })
       })
@@ -54,7 +59,7 @@ export function AnimalProfilePage() {
         if (active) setProfileState({ kind: 'error' })
       })
     return () => { active = false }
-  }, [validAnimalId, retryVersion])
+  }, [animalId, retryVersion])
 
   if (profileState.kind === 'loading') return <ProfileMessage message="Cargando perfil…" />
   if (profileState.kind === 'not-found') return <ProfileMessage message="Animal no encontrado." />

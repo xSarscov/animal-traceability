@@ -65,7 +65,7 @@ Estado de validación física de M5: **PASS**. El gate ejecutado fue W90D físic
 
 ## Segundo vertical slice M6–M7
 
-Estado: **NOT EXECUTED**. Para aprobarlo localmente: registrar Luna desde el chip disponible, abrir “Ver perfil”, comprobar los eventos iniciales, registrar una vacunación y una nota, y reescanear el chip para volver al mismo perfil. Tras la prueba debe ejecutarse `db reset` para restaurar el chip de demo a `available` sin animal asociado.
+Estado: **PASS**. Se ejecutó con el usuario local `staff@animal-traceability.test`: escaneo del chip disponible, registro de Luna, apertura de “Ver perfil”, verificación de los eventos iniciales, registro de una vacunación y una nota, y reescaneo hacia el mismo perfil. Después se ejecutó `db reset`; el chip volvió a `available` sin animal asociado.
 
 ## Checklist previo a presentación
 

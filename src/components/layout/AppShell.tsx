@@ -53,6 +53,14 @@ export function AppShell() {
               >
                 Microchips
               </NavLink>
+              <NavLink
+                className={({ isActive }) =>
+                  isActive ? 'text-emerald-800 underline underline-offset-4' : 'text-stone-600 hover:text-stone-950'
+                }
+                to="/recovery-reports"
+              >
+                Reportes
+              </NavLink>
             </nav>
           </div>
           <div className="flex items-center gap-3">

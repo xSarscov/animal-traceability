@@ -121,7 +121,13 @@ La pantalla distingue loading, inventario vacío, filtros sin coincidencias y er
 
 `submit_recovery_report(text, text, text, text)` también es `SECURITY DEFINER` con el mismo `search_path`. Normaliza y limita el input, deriva el animal desde el chip y acepta solo un animal `lost`. Obtiene `FOR SHARE OF animal` antes del INSERT para coordinarse con el `FOR UPDATE` de M8: si `found` gana la carrera, el reporte se rechaza de forma segura. Inserta exclusivamente `pending`; no recibe animal, organización, propietario, estado ni timestamps del navegador.
 
-Ambas funciones revocan ejecución de `PUBLIC` y conceden `EXECUTE` explícito a `anon` y `authenticated`. M9 no concede grants de tabla ni policies anónimas: `anon` sigue sin `SELECT` directo sobre tablas privadas ni `INSERT` sobre `recovery_reports`. M10, todavía pendiente, será la única milestone que materialice el inbox de personal.
+Ambas funciones revocan ejecución de `PUBLIC` y conceden `EXECUTE` explícito a `anon` y `authenticated`. M9 no concede grants de tabla ni policies anónimas: `anon` sigue sin `SELECT` directo sobre tablas privadas ni `INSERT` sobre `recovery_reports`.
+
+## Recovery Inbox M10
+
+`/recovery-reports` vive dentro de `RequireAuth` y `AppShell`. Su lectura continúa siendo CRUD simple bajo la policy `recovery_reports_select_for_members`: recupera los reportes visibles ordenados por `created_at DESC`, y resuelve animales y microchips relacionados en dos lecturas batch adicionales. No hay RPC de lectura, paginación ni realtime; el filtro local solo opera sobre filas ya autorizadas. Los datos del reportante se muestran exclusivamente en esta ruta privada.
+
+Las transiciones de la máquina de estados usan `mark_recovery_report_reviewed(uuid)` (`pending → reviewed`) y `close_recovery_report(uuid)` (`reviewed → closed`). Ambas funciones son `SECURITY DEFINER`, fijan `search_path = pg_catalog, public`, obtienen el caller con `auth.uid()`, derivan la organización desde `report → animal`, comprueban membership explícita y bloquean la fila de `recovery_reports` con `FOR UPDATE`. Revocan ejecución a `PUBLIC` y `anon`, y la conceden únicamente a `authenticated`. No se concede `UPDATE` directo ni se crea policy de actualización. `closed` es terminal; revisar o cerrar no cambia `animals.status`, no altera microchips ni agrega eventos. M11 (dashboard) sigue pendiente.
 
 ## Estructura prevista
 

@@ -77,6 +77,10 @@ A.organization_id = A.microchip.organization_id = A.owner.organization_id
 
 No debe ser posible crear ni modificar un animal de modo que produzca referencias cruzadas entre tenants. M2 lo refuerza en PostgreSQL mediante las FKs compuestas `(organization_id, owner_id) → owners (organization_id, id)` y `(organization_id, microchip_id) → microchips (organization_id, id)`. RLS sigue siendo obligatorio, pero no sustituye esta integridad referencial.
 
+### Descripción no normativa — ciclo de vida de recovery reports v0.1
+
+Como descripción del flujo materializado en M10, un `recovery_report` avanza únicamente `pending → reviewed → closed`; `closed` es terminal. Este ciclo es independiente del estado actual del animal una vez creado el reporte: revisar o cerrar un reporte no marca al animal como encontrado ni modifica microchips o eventos.
+
 ## Invariantes de seguridad y acceso
 
 - La frontera de acceso es `GRANT + RLS + integridad PostgreSQL`; React no es un control de autorización.

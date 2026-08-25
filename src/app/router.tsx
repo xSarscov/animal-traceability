@@ -7,6 +7,7 @@ import { LoginPage } from '../features/auth/LoginPage'
 import { RequireAuth } from '../features/auth/RequireAuth'
 import { MicrochipInventoryPage } from '../features/microchips/MicrochipInventoryPage'
 import { PublicAnimalPage } from '../features/recovery/PublicAnimalPage'
+import { RecoveryInboxPage } from '../features/recovery/RecoveryInboxPage'
 import { ScanPage } from '../features/scanner/ScanPage'
 
 function HomePage() {
@@ -59,7 +60,7 @@ export const router = createBrowserRouter([
           { path: 'animals/new', element: <AnimalRegistrationPage /> },
           { path: 'animals/:animalId', element: <AnimalProfilePage /> },
           { path: 'microchips', element: <MicrochipInventoryPage /> },
-          { path: 'recovery-reports', element: <Navigate replace to="/" /> },
+          { path: 'recovery-reports', element: <RecoveryInboxPage /> },
         ],
       },
     ],

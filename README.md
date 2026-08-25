@@ -4,7 +4,7 @@ MVP web de identificación y trazabilidad animal mediante microchips RFID y lect
 
 ## Estado
 
-M9 — Ficha pública segura + reporte de recuperación. `/public/:chipCode` funciona sin sesión mediante RPCs de proyección limitada; no concede acceso anónimo directo a tablas privadas. Los reportes públicos solo se aceptan para animales perdidos y quedan `pending`. El inbox de personal sigue pendiente en M10.
+M10 — Recovery Inbox. La ruta privada `/recovery-reports` permite al personal autorizado consultar los reportes visibles bajo RLS y avanzar exclusivamente `pending → reviewed → closed` mediante RPCs transaccionales. M11 (dashboard) sigue pendiente.
 
 ## Requisitos
 
@@ -32,6 +32,8 @@ supabase gen types typescript --local --schema public > src/types/database.types
 ```
 
 En esta máquina, ejecutar esos comandos desde Ubuntu/WSL para usar Docker CLI sin Docker Desktop. Los scripts npm equivalentes se mantienen para entornos donde la CLI local esté disponible. `db:reset` aplica las migrations y luego carga `supabase/seed.sql`.
+
+Después de un `supabase db reset`, que Docker o PostgreSQL aparezcan `healthy` no demuestra que migrations y seed ya hayan terminado. Antes de abrir el frontend para una demo, esperar el exit 0 del reset y comprobar `to_regclass('public.microchips') IS NOT NULL` y el estado `available` del chip demo. No se usa una espera fija.
 
 El seed local crea únicamente para demo:
 
@@ -70,7 +72,13 @@ M8 usa las RPC `mark_animal_lost` y `mark_animal_found` para cambiar `active →
 
 La ruta pública `/public/:chipCode` está fuera de `RequireAuth` y del shell privado. Solo llama a `get_public_animal_by_chip`, que devuelve código, nombre, especie, raza, sexo, color y estado para un microchip implantado; no consulta ni devuelve propietarios, PII o IDs internos. `unknown`, `available` y `blocked` comparten el mismo resultado de no encontrado.
 
-Cuando el estado público es `lost`, el formulario usa `submit_recovery_report`. Esa RPC valida y normaliza los datos, deriva el animal desde el chip y crea exclusivamente un reporte `pending`. No hay grants ni policies anónimas sobre `recovery_reports`; el visitante tampoco puede leer el reporte creado. M10 será responsable del inbox y de sus transiciones de estado.
+Cuando el estado público es `lost`, el formulario usa `submit_recovery_report`. Esa RPC valida y normaliza los datos, deriva el animal desde el chip y crea exclusivamente un reporte `pending`. No hay grants ni policies anónimas sobre `recovery_reports`; el visitante tampoco puede leer el reporte creado.
+
+## Recovery Inbox M10
+
+`/recovery-reports` está dentro de `RequireAuth` y del shell privado. Lee reportes bajo la policy RLS existente y carga en lotes los animales y microchips relacionados; la PII del reportante solo se muestra en esa superficie privada. El filtro de estado es local y el orden es `created_at DESC`.
+
+Las transiciones `pending → reviewed` y `reviewed → closed` usan respectivamente `mark_recovery_report_reviewed` y `close_recovery_report`. Ambas RPC son `SECURITY DEFINER`, verifican membership derivada del animal y bloquean el reporte con `FOR UPDATE`. No existe `UPDATE` directo para `authenticated`; `closed` es terminal y las transiciones no cambian el estado del animal ni escriben eventos. M11 será responsable del dashboard.
 
 ## Checks
 

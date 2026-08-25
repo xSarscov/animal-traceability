@@ -21,6 +21,14 @@ standard:      ISO 11784/11785
 
 No usar este chip para crear un animal antes de iniciar la demo. Tras una demo completa, restaurar el entorno de demo o usar un seed nuevo antes de la siguiente presentación, pues el registro lo cambiará a `implanted`.
 
+### Gate de readiness posterior a `db reset`
+
+Un contenedor Docker o PostgreSQL marcado como `healthy` no basta para iniciar la demo: Auth y otros servicios pueden estar vivos antes de que migrations y seed estén listos. Después de `supabase db reset`, esperar su exit 0 y comprobar, sin usar una espera fija:
+
+1. `SELECT to_regclass('public.microchips') IS NOT NULL;` devuelve `true`.
+2. El chip `990000015300168` existe y su `status` es `available`.
+3. Solo entonces abrir frontend, login o una sesión anónima.
+
 ## Guion exacto y resultados esperados
 
 1. Mostrar el microchip físico `990000015300168`.
@@ -46,7 +54,7 @@ No usar este chip para crear un animal antes de iniciar la demo. Tras una demo c
 11. Enviar un reporte de “animal encontrado”.
    - Resultado: se crea un `recovery_report` `pending` sin conceder al visitante acceso a los datos privados.
 12. Volver como personal a `/recovery-reports`.
-   - Resultado esperado para M10: se ve el reporte pendiente asociado a Luna.
+   - Resultado: se ve el reporte pendiente asociado a Luna; se marca como revisado, se puede abrir el animal, marcarlo encontrado mediante M8 y cerrar el reporte ya revisado sin alterar nuevamente el animal.
 
 ## Plan de recuperación si falla el lector
 
@@ -75,6 +83,10 @@ Estado: **PASS**. Se ejecutó con `staff@animal-traceability.test`: registro de 
 
 Estado: **PASS**. Se ejecutó con un contexto de navegador independiente y sin sesión (`localStorage.length = 0`): se registró Luna con datos canario de propietario, se marcó como perdida y se abrió `/public/990000015300168`. La ficha mostró únicamente los campos públicos aprobados; no expuso nombre, teléfono, email ni dirección del propietario. El visitante anónimo envió un reporte y la base confirmó un único `recovery_report` asociado con estado `pending`. Tras la validación se ejecutó `db reset`; el chip `990000015300168` volvió a `available`, sin animales asociados y sin reportes de recuperación.
 
+## Validación M10 — Recovery Inbox
+
+Estado: **PASS**. Tras el gate de readiness se registró Luna, se marcó como perdida y un contexto anónimo real envió el reporte `pending`. Como staff, `/recovery-reports` mostró los datos privados del reportante, avanzó el reporte a `reviewed`, abrió el animal y lo marcó como encontrado. El inbox conservó el reporte cuando Luna ya estaba `active` y permitió cerrarlo en `closed`. La base confirmó un único reporte cerrado, Luna `active` y el microchip `implanted` antes del reset final.
+
 ## Checklist previo a presentación
 
 - [ ] Migraciones aplicadas y seed de demo cargado.
@@ -87,7 +99,7 @@ Estado: **PASS**. Se ejecutó con un contexto de navegador independiente y sin s
 - [x] Gate físico M5 W90D → USB HID → navegador → Enter → “Microchip disponible”.
 - [x] Perfil público fue probado en sesión anónima y no revela PII.
 - [x] Flujo de reporte público verificado; crea un reporte `pending` sin conceder lectura anónima.
-- [ ] Recovery inbox pendiente de M10.
+- [x] Smoke Recovery Inbox: pending → reviewed → animal encontrado → closed.
 - [ ] Estados loading, empty y error revisados para pantallas de la demo.
 - [ ] TypeScript, lint, pruebas relevantes y build aprobados para el milestone desplegado.
 - [ ] Plan de restauración del seed disponible entre demostraciones.

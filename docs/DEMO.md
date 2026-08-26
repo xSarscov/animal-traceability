@@ -124,4 +124,4 @@ Estado: **PASS**. Las migrations versionadas se aplicaron al proyecto Supabase C
 
 Primer vertical slice (M0–M5): W90D → USB → navegador → escanear `990000015300168` → Enter → Supabase → “Microchip disponible”. No proceder al registro completo sin esta prueba física.
 
-Segundo vertical slice (M6–M7): escaneo disponible → registrar Luna → reescanear → perfil de Luna → timeline. Desde aquí el MVP ya es demostrable; M8–M12 completan perdido/encontrado, ficha pública, inbox, dashboard y QA. M13 (despliegue) sigue pendiente.
+Segundo vertical slice (M6–M7): escaneo disponible → registrar Luna → reescanear → perfil de Luna → timeline. Desde aquí el MVP ya es demostrable; M8–M12 completan perdido/encontrado, ficha pública, inbox, dashboard y QA. M13 deja el frontend publicado en Vercel y el backend versionado en Supabase Cloud.

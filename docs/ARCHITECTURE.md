@@ -145,7 +145,7 @@ Playwright ejecuta un único flujo Chromium estatal sobre el fixture local: `wor
 
 M13 prepara una SPA estática Vite en Vercel: [`vercel.json`](../vercel.json) reescribe las rutas a `index.html` para que `createBrowserRouter` resuelva deep links. Vercel recibe exclusivamente `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` del mismo proyecto Supabase Cloud; no recibe service role ni credenciales de base.
 
-Supabase Cloud recibe las migrations existentes mediante `db push` revisado con dry-run, sin seed. El bootstrap de Auth, organización, membership e inventario es administrativo y no está en Git. El smoke M13 es separado del demo M12: requiere URL HTTPS y credenciales controladas, verifica solo lectura/deep links/login/logout y no puede ejecutar writes. Sin project ref y URL Cloud explícitos, M13 queda preparado pero no desplegado.
+Supabase Cloud recibe las migrations existentes mediante `db push` revisado con dry-run, sin seed. El bootstrap de Auth, organización, membership e inventario es administrativo y no está en Git. El smoke M13 es separado del demo M12: requiere URL HTTPS y credenciales controladas, verifica solo lectura/deep links/login/logout y no puede ejecutar writes. El proyecto `xuxgavoxxeafshmirjpv` está desplegado en Vercel como `https://animal-traceability-five.vercel.app`; la validación hosted read-only fue ejecutada sin modificar datos.
 
 ## Estructura prevista
 

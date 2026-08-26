@@ -2,7 +2,7 @@
 
 ## Estado M13
 
-**Schema Cloud aplicado; frontend hosted NOT EXECUTED.** Las migrations versionadas ya se aplicaron al proyecto Cloud seleccionado por el operador, sin seed. Aún faltan bootstrap administrativo, Vercel, variables production y smoke hosted para cerrar M13.
+**M13 desplegado; smoke hosted read-only PASS.** El proyecto Supabase Cloud `xuxgavoxxeafshmirjpv` recibió las migrations versionadas sin seed; Auth, organización `test-org`, membership e inventario demo fueron configurados administrativamente. Vercel publica `https://animal-traceability-five.vercel.app` con el commit M13.
 
 ## Principios no negociables
 
@@ -152,13 +152,23 @@ Además, comprobar manualmente con refresh directo que `/scan`, `/public/not-a-c
 - **Base de datos:** nunca hacer reset remoto. Detener el deploy, investigar y publicar una migration correctiva forward-only.
 - **Cambios futuros de DB:** nueva migration → reset/test local → review → `supabase db push --dry-run` → `supabase db push`.
 
+## Evidencia M13
+
+- Project ref: `xuxgavoxxeafshmirjpv` (sin credenciales).
+- Migration list, dry-run previo/posterior y `db push` revisados; no se usó `--include-seed` ni `db reset --linked`.
+- Tipos remotos equivalentes al contrato local; no se modificó `database.types.ts`.
+- Site URL y Redirect URL de Auth apuntan a `https://animal-traceability-five.vercel.app/`; signup público desactivado y Email habilitado para `signInWithPassword`.
+- Vercel Production: `https://animal-traceability-five.vercel.app` (commit `17a37d2`), Node `22.x`, variables únicamente `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`.
+- Deep links `/login`, `/scan`, `/public/not-a-chip` y `/recovery-reports` responden mediante la SPA. Smoke hosted read-only: login, dashboard, inventario, scanner, inbox y logout PASS; se observó un primer error transitorio de carga del dashboard y el retry posterior confirmó las cinco métricas.
+- Security Advisor Cloud mostró únicamente advertencias esperadas por las RPC `SECURITY DEFINER` intencionalmente expuestas (públicas M9 y autenticadas M6/M8/M10); no se modificó la seguridad para ocultarlas.
+
 ## Checklist final
 
-- [ ] Project ref Cloud elegido y confirmado por el operador.
-- [ ] `migration list`, dry-run, push y dry-run posterior revisados.
-- [ ] Seed local excluido de Cloud; tipos remotos equivalentes y Security Advisor revisado.
-- [ ] Signup público cerrado; Site URL y Redirect URL production exactos.
-- [ ] Usuario, organización, membership e inventario Cloud provisionados administrativamente.
-- [ ] Variables Vercel Production configuradas sin secretos de servidor.
-- [ ] Deploy Vercel del commit M13 confirmado.
-- [ ] Deep links y `npm run smoke:production` PASS.
+- [x] Project ref Cloud elegido y confirmado por el operador.
+- [x] `migration list`, dry-run, push y dry-run posterior revisados.
+- [x] Seed local excluido de Cloud; tipos remotos equivalentes y Security Advisor revisado.
+- [x] Signup público cerrado; Site URL y Redirect URL production exactos.
+- [x] Usuario, organización, membership e inventario Cloud provisionados administrativamente.
+- [x] Variables Vercel Production configuradas sin secretos de servidor.
+- [x] Deploy Vercel del commit M13 confirmado.
+- [x] Deep links y smoke hosted read-only PASS.

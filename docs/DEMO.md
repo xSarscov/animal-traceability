@@ -99,7 +99,7 @@ Estado: **PASS**. Tras `db reset` y el gate HTTP de Auth/PostgREST, Playwright e
 
 ## Deployment M13
 
-Estado: **NOT EXECUTED** para el deploy hosted. Las migrations versionadas ya se aplicaron al proyecto Supabase Cloud seleccionado, sin seed. Aún faltan bootstrap administrativo, Vercel, variables production y smoke hosted read-only. Consulte [`DEPLOYMENT.md`](DEPLOYMENT.md).
+Estado: **PASS**. Las migrations versionadas se aplicaron al proyecto Supabase Cloud `xuxgavoxxeafshmirjpv` sin seed; Auth/signup, organización `test-org`, membership e inventario fueron configurados administrativamente. Vercel publica `https://animal-traceability-five.vercel.app` y el smoke hosted read-only verificó login, dashboard, inventario, scanner, inbox, deep links y logout. No se ejecutaron escrituras en Cloud durante el smoke. Consulte [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ## Checklist previo a presentación
 

@@ -4,7 +4,7 @@ MVP web de identificación y trazabilidad animal mediante microchips RFID y lect
 
 ## Estado
 
-M13 en progreso — schema Supabase Cloud aplicado, frontend hosted **NOT EXECUTED**. El MVP incluye preparación para Vercel, deep links SPA y un smoke hosted de solo lectura. Faltan bootstrap administrativo, URL Vercel, variables production y smoke remoto para declararlo desplegado.
+M13 — Deployment PASS. Supabase Cloud y Vercel están configurados; el smoke hosted read-only verificó login, dashboard, inventario, scanner, inbox, deep links y logout. M13 no usa el seed local en Cloud ni expone credenciales de servidor.
 
 ## Requisitos
 
@@ -88,7 +88,7 @@ Las transiciones `pending → reviewed` y `reviewed → closed` usan respectivam
 
 `/` es un dashboard privado dentro de `RequireAuth` y `AppShell`. Ejecuta en paralelo cinco consultas `SELECT id` con `count: 'exact'` y `head: true` sobre `animals`, `microchips` y `recovery_reports`; no descarga colecciones, no usa `organization_id`, no crea RPCs ni cambia seguridad. RLS define el universo contado, por lo que un usuario con varias memberships obtiene el total de todas las filas que ya puede leer.
 
-El resumen es deliberadamente eventual entre sus cinco lecturas: no necesita snapshot transaccional ni agregador backend para el MVP. Muestra loading, error con retry y los ceros como valores válidos, además del CTA principal “Escanear microchip” hacia `/scan`. No incluye gráficas, analytics, polling ni realtime. M12 está validado localmente; M13 (deployment) sigue pendiente.
+El resumen es deliberadamente eventual entre sus cinco lecturas: no necesita snapshot transaccional ni agregador backend para el MVP. Muestra loading, error con retry y los ceros como valores válidos, además del CTA principal “Escanear microchip” hacia `/scan`. No incluye gráficas, analytics, polling ni realtime.
 
 ## Checks
 

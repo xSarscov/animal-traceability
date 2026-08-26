@@ -141,6 +141,12 @@ M12 no cambia la arquitectura de dominio. El gate local `scripts/check-local-rea
 
 Playwright ejecuta un único flujo Chromium estatal sobre el fixture local: `workers = 1`, `retries = 0`, trazas y screenshots solo de fallo. No realiza reset, no usa `service_role` y no puede apuntar a Cloud. La restauración posterior es un `supabase db reset` explícito. Esta automatización recorre la integración M5–M11 con entrada manual en el formulario del scanner; no sustituye el gate físico W90D ya validado por separado.
 
+## Deployment M13
+
+M13 prepara una SPA estática Vite en Vercel: [`vercel.json`](../vercel.json) reescribe las rutas a `index.html` para que `createBrowserRouter` resuelva deep links. Vercel recibe exclusivamente `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` del mismo proyecto Supabase Cloud; no recibe service role ni credenciales de base.
+
+Supabase Cloud recibe las migrations existentes mediante `db push` revisado con dry-run, sin seed. El bootstrap de Auth, organización, membership e inventario es administrativo y no está en Git. El smoke M13 es separado del demo M12: requiere URL HTTPS y credenciales controladas, verifica solo lectura/deep links/login/logout y no puede ejecutar writes. Sin project ref y URL Cloud explícitos, M13 queda preparado pero no desplegado.
+
 ## Estructura prevista
 
 ```text

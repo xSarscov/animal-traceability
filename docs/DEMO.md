@@ -97,6 +97,10 @@ Estado: **PASS**. Tras el gate de readiness, el dashboard privado mostró el bas
 
 Estado: **PASS**. Tras `db reset` y el gate HTTP de Auth/PostgREST, Playwright ejecutó en Chromium el flujo estatal M5–M11 completo: login, dashboard, scanner con entrada manual, registro de Luna, perfil privado con PII canario, vacunación, nota, perdido, re-scan, ficha pública anónima sin PII, reporte `pending`, inbox `reviewed`, encontrado, cierre `closed`, dashboard y logout. Las 272 pruebas pgTAP, checks frontend y advisors de seguridad pasaron. Playwright no repite ni sustituye el gate físico W90D M5, que permanece como evidencia manual separada. El reset final y readiness restauraron `0 / 1 / 0 / 0 / 0`.
 
+## Deployment M13
+
+Estado: **NOT EXECUTED** para el deploy hosted. Las migrations versionadas ya se aplicaron al proyecto Supabase Cloud seleccionado, sin seed. Aún faltan bootstrap administrativo, Vercel, variables production y smoke hosted read-only. Consulte [`DEPLOYMENT.md`](DEPLOYMENT.md).
+
 ## Checklist previo a presentación
 
 - [x] Migraciones aplicadas y seed de demo cargado; `db reset` terminó con exit `0`.

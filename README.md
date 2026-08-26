@@ -4,7 +4,7 @@ MVP web de identificación y trazabilidad animal mediante microchips RFID y lect
 
 ## Estado
 
-M12 — QA y E2E. El MVP incorpora un readiness HTTP local para Auth/PostgREST y `npm run test:e2e`, un demo Playwright estatal local-only. Antes y después del E2E es obligatorio ejecutar `supabase db reset` desde WSL; M13 (deployment) sigue pendiente.
+M13 en progreso — schema Supabase Cloud aplicado, frontend hosted **NOT EXECUTED**. El MVP incluye preparación para Vercel, deep links SPA y un smoke hosted de solo lectura. Faltan bootstrap administrativo, URL Vercel, variables production y smoke remoto para declararlo desplegado.
 
 ## Requisitos
 
@@ -21,6 +21,8 @@ npm run dev
 ```
 
 `.env` solo contiene la URL y publishable key públicas de Supabase; nunca incluir `service_role`, contraseñas ni tokens.
+
+Para Cloud/Vercel, consultar [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md). El seed y credenciales locales no se usan en Cloud; Vercel Production recibe únicamente `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. `npm run smoke:production` requiere credenciales del operador y es estrictamente read-only.
 
 ## Base de datos local
 
@@ -97,6 +99,7 @@ npm run test:run
 npm run build
 npm run qa:readiness
 npm run test:e2e
+npm run smoke:production
 ```
 
 Consulte `docs/` para el producto, arquitectura y reglas de dominio normativas.

@@ -54,6 +54,8 @@ supabase db advisors --local --type security --level info
 
 `npm run test:e2e` ejecuta primero `qa:readiness`. Playwright usa Chromium, un único worker y `retries: 0`: un reintento automático sería inválido después de convertir el chip demo de `available` a `implanted`. Ante un fallo después de iniciar el flujo: `supabase db reset` → esperar exit `0` → `npm run qa:readiness` → `npm run test:e2e`.
 
+`npm run smoke:production` es diferente: requiere `DEPLOYMENT_URL` HTTPS, `DEPLOYMENT_STAFF_EMAIL` y `DEPLOYMENT_STAFF_PASSWORD` entregados por el operador. No tiene seed, reset, valores demo ni escrituras; valida solo el deployment hosted. Consulte [`docs/DEPLOYMENT.md`](DEPLOYMENT.md).
+
 Las trazas y screenshots se conservan solo cuando falla una prueba. `playwright-report/` y `test-results/` permanecen ignorados por Git.
 
 ## Matriz de cobertura

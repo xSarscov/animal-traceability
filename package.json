@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -12,6 +15,7 @@
     "test:run": "vitest run",
     "qa:readiness": "node scripts/check-local-readiness.mjs",
     "test:e2e": "npm run qa:readiness && playwright test",
+    "smoke:production": "playwright test --config playwright.production.config.ts",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "db:reset": "supabase db reset",

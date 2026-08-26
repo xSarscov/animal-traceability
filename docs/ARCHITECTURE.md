@@ -133,7 +133,13 @@ Las transiciones de la máquina de estados usan `mark_recovery_report_reviewed(u
 
 La ruta privada `/` materializa el dashboard dentro de `RequireAuth` y `AppShell`. Su capa de datos inicia en paralelo cinco lecturas directas bajo los grants y policies RLS existentes: `animals` total, `microchips` con `available`, `microchips` con `implanted`, `animals` con `lost` y `recovery_reports` con `pending`. Cada una usa `SELECT id` con `count: 'exact'` y `head: true`, por lo que no transfiere filas completas ni recibe `organization_id` desde el navegador. RLS define exactamente el universo agregado, incluso para una sesión con varias organizaciones autorizadas.
 
-No hay migration, RPC, grants, policies, joins, realtime, polling ni gráficos. Las cinco respuestas son un resumen operacional eventualmente consistente entre requests; M11 no introduce un agregador transaccional. Cero es un count válido; un error o count nulo en cualquiera de las cinco lecturas invalida el resumen completo y habilita retry. El CTA del dashboard navega a `/scan`. M12 (QA y demo final) sigue pendiente.
+No hay migration, RPC, grants, policies, joins, realtime, polling ni gráficos. Las cinco respuestas son un resumen operacional eventualmente consistente entre requests; M11 no introduce un agregador transaccional. Cero es un count válido; un error o count nulo en cualquiera de las cinco lecturas invalida el resumen completo y habilita retry. El CTA del dashboard navega a `/scan`.
+
+## QA/E2E M12
+
+M12 no cambia la arquitectura de dominio. El gate local `scripts/check-local-readiness.mjs` carga las mismas variables Vite del frontend, acepta solo `127.0.0.1`/`localhost` y verifica por HTTP Auth, un JWT de staff utilizable por PostgREST/RLS, la RPC pública anónima y el baseline de demo limpio antes de permitir E2E destructivos.
+
+Playwright ejecuta un único flujo Chromium estatal sobre el fixture local: `workers = 1`, `retries = 0`, trazas y screenshots solo de fallo. No realiza reset, no usa `service_role` y no puede apuntar a Cloud. La restauración posterior es un `supabase db reset` explícito. Esta automatización recorre la integración M5–M11 con entrada manual en el formulario del scanner; no sustituye el gate físico W90D ya validado por separado.
 
 ## Estructura prevista
 

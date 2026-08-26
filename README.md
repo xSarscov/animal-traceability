@@ -4,7 +4,7 @@ MVP web de identificación y trazabilidad animal mediante microchips RFID y lect
 
 ## Estado
 
-M11 — Dashboard simple. La ruta privada `/` muestra cinco métricas operativas bajo RLS: animales registrados, microchips disponibles e implantados, animales perdidos y reportes pendientes. M12 (QA y demo final) sigue pendiente.
+M12 — QA y E2E. El MVP incorpora un readiness HTTP local para Auth/PostgREST y `npm run test:e2e`, un demo Playwright estatal local-only. Antes y después del E2E es obligatorio ejecutar `supabase db reset` desde WSL; M13 (deployment) sigue pendiente.
 
 ## Requisitos
 
@@ -34,6 +34,8 @@ supabase gen types typescript --local --schema public > src/types/database.types
 En esta máquina, ejecutar esos comandos desde Ubuntu/WSL para usar Docker CLI sin Docker Desktop. Los scripts npm equivalentes se mantienen para entornos donde la CLI local esté disponible. `db:reset` aplica las migrations y luego carga `supabase/seed.sql`.
 
 Después de un `supabase db reset`, que Docker o PostgreSQL aparezcan `healthy` no demuestra que migrations y seed ya hayan terminado. Antes de abrir el frontend para una demo, esperar el exit 0 del reset y comprobar `to_regclass('public.microchips') IS NOT NULL` y el estado `available` del chip demo. No se usa una espera fija.
+
+Para el gate HTTP completo de M12, ejecutar además `npm run qa:readiness`. Comprueba Auth, PostgREST autenticado y anónimo, RLS y el baseline limpio `0 / 1 / 0 / 0 / 0`; aborta si la URL Supabase no es `127.0.0.1` o `localhost`. `npm run test:e2e` incluye ese check y es destructivo sobre el fixture local; consulte [`docs/QA.md`](docs/QA.md) para el reset obligatorio y el flujo cubierto.
 
 El seed local crea únicamente para demo:
 
@@ -84,7 +86,7 @@ Las transiciones `pending → reviewed` y `reviewed → closed` usan respectivam
 
 `/` es un dashboard privado dentro de `RequireAuth` y `AppShell`. Ejecuta en paralelo cinco consultas `SELECT id` con `count: 'exact'` y `head: true` sobre `animals`, `microchips` y `recovery_reports`; no descarga colecciones, no usa `organization_id`, no crea RPCs ni cambia seguridad. RLS define el universo contado, por lo que un usuario con varias memberships obtiene el total de todas las filas que ya puede leer.
 
-El resumen es deliberadamente eventual entre sus cinco lecturas: no necesita snapshot transaccional ni agregador backend para el MVP. Muestra loading, error con retry y los ceros como valores válidos, además del CTA principal “Escanear microchip” hacia `/scan`. No incluye gráficas, analytics, polling ni realtime. M12 sigue pendiente.
+El resumen es deliberadamente eventual entre sus cinco lecturas: no necesita snapshot transaccional ni agregador backend para el MVP. Muestra loading, error con retry y los ceros como valores válidos, además del CTA principal “Escanear microchip” hacia `/scan`. No incluye gráficas, analytics, polling ni realtime. M12 está validado localmente; M13 (deployment) sigue pendiente.
 
 ## Checks
 
@@ -93,6 +95,7 @@ npm run typecheck
 npm run lint
 npm run test:run
 npm run build
+npm run qa:readiness
 npm run test:e2e
 ```
 

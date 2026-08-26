@@ -37,6 +37,20 @@ export default tseslint.config(
     },
   },
   {
+    files: ['scripts/**/*.mjs', 'tests/e2e/**/*.ts', 'playwright.config.ts'],
+    languageOptions: {
+      globals: {
+        AbortSignal: 'readonly',
+        clearTimeout: 'readonly',
+        console: 'readonly',
+        fetch: 'readonly',
+        process: 'readonly',
+        setTimeout: 'readonly',
+        URL: 'readonly',
+      },
+    },
+  },
+  {
     files: ['src/app/router.tsx'],
     rules: {
       'react-refresh/only-export-components': 'off',

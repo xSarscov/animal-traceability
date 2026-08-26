@@ -25,9 +25,11 @@ No usar este chip para crear un animal antes de iniciar la demo. Tras una demo c
 
 Un contenedor Docker o PostgreSQL marcado como `healthy` no basta para iniciar la demo: Auth y otros servicios pueden estar vivos antes de que migrations y seed estén listos. Después de `supabase db reset`, esperar su exit 0 y comprobar, sin usar una espera fija:
 
-1. `SELECT to_regclass('public.microchips') IS NOT NULL;` devuelve `true`.
-2. El chip `990000015300168` existe y su `status` es `available`.
-3. Solo entonces abrir frontend, login o una sesión anónima.
+1. `supabase db reset` terminó con exit `0`.
+2. `SELECT to_regclass('public.microchips') IS NOT NULL;` devuelve `true`.
+3. El chip `990000015300168` existe y su `status` es `available`.
+4. Ejecutar `npm run qa:readiness`, que comprueba Auth, PostgREST autenticado/anónimo y baseline `0 / 1 / 0 / 0 / 0`.
+5. Solo entonces abrir frontend, login o una sesión anónima.
 
 ## Guion exacto y resultados esperados
 
@@ -91,12 +93,17 @@ Estado: **PASS**. Tras el gate de readiness se registró Luna, se marcó como pe
 
 Estado: **PASS**. Tras el gate de readiness, el dashboard privado mostró el baseline `0 / 1 / 0 / 0 / 0` (animales, disponibles, implantados, perdidos, reportes pendientes). Después de registrar Luna mostró `1 / 0 / 1 / 0 / 0`; tras marcarla perdida y enviar un reporte anónimo real mostró `1 / 0 / 1 / 1 / 1`; luego de revisar el reporte y marcar a Luna encontrada mostró `1 / 0 / 1 / 0 / 0`. El reset final restauró el chip de demo disponible, sin animal ni reportes.
 
+## Validación M12 — QA/E2E
+
+Estado: **PASS**. Tras `db reset` y el gate HTTP de Auth/PostgREST, Playwright ejecutó en Chromium el flujo estatal M5–M11 completo: login, dashboard, scanner con entrada manual, registro de Luna, perfil privado con PII canario, vacunación, nota, perdido, re-scan, ficha pública anónima sin PII, reporte `pending`, inbox `reviewed`, encontrado, cierre `closed`, dashboard y logout. Las 272 pruebas pgTAP, checks frontend y advisors de seguridad pasaron. Playwright no repite ni sustituye el gate físico W90D M5, que permanece como evidencia manual separada. El reset final y readiness restauraron `0 / 1 / 0 / 0 / 0`.
+
 ## Checklist previo a presentación
 
-- [ ] Migraciones aplicadas y seed de demo cargado.
-- [ ] `990000015300168` existe, está `available` y no tiene animal asociado; no está `blocked` ni `implanted`.
-- [ ] Usuario de personal y membresía de organización probados.
-- [ ] Login y logout locales probados con `staff@animal-traceability.test`; el acceso anónimo no revela tablas privadas.
+- [x] Migraciones aplicadas y seed de demo cargado; `db reset` terminó con exit `0`.
+- [x] `npm run qa:readiness` confirma `0 / 1 / 0 / 0 / 0` antes de la demo.
+- [x] `990000015300168` existe, está `available` y no tiene animal asociado; no está `blocked` ni `implanted`.
+- [x] Usuario de personal y membresía de organización probados.
+- [x] Login y logout locales probados con `staff@animal-traceability.test`; el acceso anónimo no revela tablas privadas.
 - [ ] W90D, cable USB y puerto físico probados en un navegador real.
 - [ ] Escaneo real escribe el código y Enter en un campo simple.
 - [ ] `/scan` fue probado con lector y con entrada manual.
@@ -105,12 +112,12 @@ Estado: **PASS**. Tras el gate de readiness, el dashboard privado mostró el bas
 - [x] Flujo de reporte público verificado; crea un reporte `pending` sin conceder lectura anónima.
 - [x] Smoke Recovery Inbox: pending → reviewed → animal encontrado → closed.
 - [x] Dashboard: baseline, registro, perdido, reporte pendiente, revisado y encontrado.
-- [ ] Estados loading, empty y error revisados para pantallas de la demo.
-- [ ] TypeScript, lint, pruebas relevantes y build aprobados para el milestone desplegado.
-- [ ] Plan de restauración del seed disponible entre demostraciones.
+- [x] Estados loading, empty y error revisados para pantallas de la demo.
+- [x] TypeScript, lint, pruebas relevantes y build aprobados para el milestone desplegado.
+- [x] Plan de restauración del seed: `db reset` explícito y readiness posterior.
 
 ## Gates de progreso
 
 Primer vertical slice (M0–M5): W90D → USB → navegador → escanear `990000015300168` → Enter → Supabase → “Microchip disponible”. No proceder al registro completo sin esta prueba física.
 
-Segundo vertical slice (M6–M7): escaneo disponible → registrar Luna → reescanear → perfil de Luna → timeline. Desde aquí el MVP ya es demostrable; M8 ya añade perdido/encontrado y M9–M13 completan ficha pública, inbox, dashboard, QA y despliegue.
+Segundo vertical slice (M6–M7): escaneo disponible → registrar Luna → reescanear → perfil de Luna → timeline. Desde aquí el MVP ya es demostrable; M8–M12 completan perdido/encontrado, ficha pública, inbox, dashboard y QA. M13 (despliegue) sigue pendiente.
